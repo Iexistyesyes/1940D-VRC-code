@@ -57,10 +57,11 @@ void initialize() {
   // chassis.opcontrol_curve_buttons_right_set(pros::E_CONTROLLER_DIGITAL_Y, pros::E_CONTROLLER_DIGITAL_A);
 
   // Autonomous Selector using LLEMU
-  ez::as::auton_selector.autons_add({{"Blue_tag_43", tag_43_auton_blue},
-                                     {"Blue_tag_12", tag_12_auton_blue},
-                                     {"Red_tag_43", tag_43_auton_red},
-                                     {"Red_tag_12", tag_12_auton_red}});
+  ez::as::auton_selector.autons_add(
+    {{"Blue_tag_43", tag_43_auton_blue},
+    {"Blue_tag_12", tag_12_auton_blue},
+    {"Red_tag_43", tag_43_auton_red},
+    {"Red_tag_12", tag_12_auton_red}});
 
   // Initialize chassis and auton selector
   chassis.initialize();
