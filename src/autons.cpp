@@ -128,9 +128,7 @@ void tag_12_auton_red() {
   // Example of a simple auton that turns to a specific angle and drives forward
   chassis.odom_xyt_set(-170_cm, 0_cm, 180_deg);  // Set starting position for odometry (if using)
 }
-void test_auton() {
-  
-}
+
 // . . .
 // Make your own autonomous functions here!
 // . . 
