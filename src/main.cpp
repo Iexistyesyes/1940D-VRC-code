@@ -67,7 +67,7 @@ void initialize() {
   chassis.initialize();
   ez::as::initialize();
   master.rumble(chassis.drive_imu_calibrated() ? "." : "---");
-  Chain_Bar.reset_position();
+  // Chain_Bar.reset_position();
 }
 
 /**
@@ -238,29 +238,29 @@ void opcontrol() {
     ez_template_extras();
 
     // chassis.opcontrol_tank();  // Tank control
-    chassis.opcontrol_arcade_standard(ez::SPLIT);   // Standard split arcade
+    // chassis.opcontrol_arcade_standard(ez::SPLIT);   // Standard split arcade
     // chassis.opcontrol_arcade_standard(ez::SINGLE);  // Standard single arcade
     // chassis.opcontrol_arcade_flipped(ez::SPLIT);    // Flipped split arcade
-    // chassis.opcontrol_arcade_flipped(ez::SINGLE);   // Flipped single arcade
+    chassis.opcontrol_arcade_flipped(ez::SINGLE);   // Flipped single arcade
     // . . .
     // Put more user control code here!
     // . . .
-    // lift_motor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-    // if (master.get_digital(DIGITAL_L1)) {
-      // lift_motor.move(120);
-    // } else if (master.get_digital(DIGITAL_L2)) {
-      // lift_motor.move(-40);
-    // } else {
-      // lift_motor.move(80);
-    // }
-    if (Chain_Bar.get_position() < 100) {
-      TwoBar.move_absolute(100, 127);
-    } else if (Chain_Bar.get_position() > 100) {
-      TwoBar.move_absolute(100, -127);
-    } 
-    else {
-      TwoBar.move(0);
+    Cascade.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    if (master.get_digital(DIGITAL_L1)) {
+      Cascade.move(120);
+    } else if (master.get_digital(DIGITAL_L2)) {
+      Cascade.move(-120);
+    } else {
+      Cascade.brake();
     }
+    // if (Chain_Bar.get_position() < 100) {
+    //   TwoBar.move_absolute(100, 127);
+    // } else if (Chain_Bar.get_position() > 100) {
+    //   TwoBar.move_absolute(100, -127);
+    // } 
+    // else {
+    //   TwoBar.move(0);
+    // }
     if (master.get_analog(ANALOG_RIGHT_X) > 20) {
      Hmotor.move(127);
     } else if (master.get_analog(ANALOG_RIGHT_X) < -20) {
