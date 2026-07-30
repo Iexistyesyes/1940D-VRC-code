@@ -268,6 +268,14 @@ void opcontrol() {
     } else {
       Hmotor.move(0);
     }
+    TwoBar.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    if (master.get_digital(DIGITAL_L1)) {
+      TwoBar.move(127);
+    } else if (master.get_digital(DIGITAL_L2)) {
+      TwoBar.move(-127);
+    } else {
+      TwoBar.brake();
+    }
   }
 
   pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
