@@ -247,9 +247,9 @@ void opcontrol() {
     // . . .
     Cascade.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
     if (master.get_digital(DIGITAL_L1)) {
-      Cascade.move(120);
+      Cascade.move(127);
     } else if (master.get_digital(DIGITAL_L2)) {
-      Cascade.move(-120);
+      Cascade.move(-127);
     } else {
       Cascade.brake();
     }
