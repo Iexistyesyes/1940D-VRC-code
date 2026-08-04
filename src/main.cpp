@@ -261,9 +261,9 @@ void opcontrol() {
     // else {
     //   TwoBar.move(0);
     // }
-    if (master.get_analog(ANALOG_RIGHT_X) > 20) {
+    if (master.get_analog(ANALOG_LEFT_X) > 20) {
      Hmotor.move(127);
-    } else if (master.get_analog(ANALOG_RIGHT_X) < -20) {
+    } else if (master.get_analog(ANALOG_LEFT_X) < -20) {
       Hmotor.move(-127);
     } else {
       Hmotor.move(0);
@@ -276,6 +276,7 @@ void opcontrol() {
     } else {
       TwoBar.brake();
     }
+    
   }
 
   pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
