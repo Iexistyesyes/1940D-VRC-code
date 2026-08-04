@@ -270,11 +270,11 @@ void opcontrol() {
     }
     TwoBar.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
     if (master.get_digital(DIGITAL_L1)) {
-      TwoBar.move(127);
+      ChainBar.move(127);
     } else if (master.get_digital(DIGITAL_L2)) {
-      TwoBar.move(-127);
+      ChainBar.move(-127);
     } else {
-      TwoBar.brake();
+      ChainBar.brake();
     }
     
   }
