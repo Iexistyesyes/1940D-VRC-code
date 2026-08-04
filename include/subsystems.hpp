@@ -12,6 +12,6 @@ extern Drive chassis;
 // inline pros::Vision vision_sensor1(20);
 // inline pros::Motor intake_motor(5);
 inline pros::Motor Cascade(3);
-inline pros::Motor TwoBar(6);
+inline pros::Motor ChainBar(6);
 // inline pros::Rotation Chain_Bar(7);
 inline pros::Motor Hmotor(4);
