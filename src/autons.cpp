@@ -113,6 +113,9 @@ void tag_43_auton_blue() {
   chassis.pid_odom_set({{100_cm, 139_cm, 135_deg}, fwd, 110});  // Drive to a point on the field at a set speed
   chassis.pid_odom_set({{110_cm,125_cm}, fwd, 70});
   chassis.pid_odom_set({{100_cm, 139_cm}, rev, 70});
+  chassis.pid_odom_set({-90_deg, swing, 90});  // Turn to a specific angle with a swing turn
+  chassis.pid_odom_set({{73_cm, 121_cm}, fwd, 70});
+  // cascade.moveFor();
 }
 
 void tag_12_auton_blue() {
