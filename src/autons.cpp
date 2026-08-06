@@ -112,10 +112,16 @@ void tag_43_auton_blue() {
   chassis.odom_xyt_set(100_cm, 167_cm, 180_deg);  // Set starting position for odometry (if using)
   chassis.pid_odom_set({{100_cm, 139_cm, 135_deg}, fwd, 110});  // Drive to a point on the field at a set speed
   chassis.pid_odom_set({{110_cm,125_cm}, fwd, 70});
+  Claw.extend();
   chassis.pid_odom_set({{100_cm, 139_cm}, rev, 70});
   chassis.pid_odom_set({-90_deg, swing, 90});  // Turn to a specific angle with a swing turn
   chassis.pid_odom_set({{73_cm, 121_cm}, fwd, 70});
-  // cascade.moveFor();
+  chassis.pid_odom_set({{-46.725_cm, 129.271_cm, 235_deg}, fwd, 127})
+  cascade.move(127);
+  sleep(2000);
+  cascade.stop();
+  Claw.retract();
+  
 }
 
 void tag_12_auton_blue() {
