@@ -121,7 +121,6 @@ void tag_43_auton_blue() {
   sleep(2000);
   cascade.stop();
   Claw.retract();
-  
 }
 
 void tag_12_auton_blue() {
