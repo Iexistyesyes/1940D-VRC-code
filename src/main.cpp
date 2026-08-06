@@ -253,14 +253,6 @@ void opcontrol() {
     } else {
       Cascade.brake();
     }
-    // if (Chain_Bar.get_position() < 100) {
-    //   TwoBar.move_absolute(100, 127);
-    // } else if (Chain_Bar.get_position() > 100) {
-    //   TwoBar.move_absolute(100, -127);
-    // } 
-    // else {
-    //   TwoBar.move(0);
-    // }
     if (master.get_analog(ANALOG_LEFT_X) > 20) {
      Hmotor.move(127);
     } else if (master.get_analog(ANALOG_LEFT_X) < -20) {
