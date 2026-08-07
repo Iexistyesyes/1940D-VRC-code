@@ -121,7 +121,7 @@ void tag_43_auton_blue() {
   sleep(2000);
   cascade.stop();
   Claw.retract();
-  // finish ts later
+  // tuff boi edit
 }
 
 void tag_12_auton_blue() {
