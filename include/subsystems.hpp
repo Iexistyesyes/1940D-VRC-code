@@ -15,5 +15,3 @@ inline pros::Motor Cascade(3);
 inline pros::Motor ChainBar(6);
 // inline pros::Rotation Chain_Bar(7);
 inline pros::Motor Hmotor(4);
-extern pros::adi::claw;
-pros::adi::Pneumatics Claw('A', false); 
