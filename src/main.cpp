@@ -272,7 +272,12 @@ void opcontrol() {
       ChainBar_1.brake();
       ChainBar_2.brake();
     }
-    
+    if (master.get_digital(DIGITAL_B)) {
+      intake.move(127);
+    }
+    if (master.get_digital(DIGITAL_Y)) {
+      intake.brake();
+    }
   }
 
   pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
