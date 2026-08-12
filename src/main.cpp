@@ -238,9 +238,9 @@ void opcontrol() {
     ez_template_extras();
 
     // chassis.opcontrol_tank();  // Tank control
-    // chassis.opcontrol_arcade_standard(ez::SPLIT);   // Standard split arcade
+    chassis.opcontrol_arcade_standard(ez::SPLIT);   // Standard split arcade
     // chassis.opcontrol_arcade_standard(ez::SINGLE);  // Standard single arcade
-    chassis.opcontrol_arcade_flipped(ez::SPLIT);    // Flipped split arcade
+    // chassis.opcontrol_arcade_flipped(ez::SPLIT);    // Flipped split arcade
     // chassis.opcontrol_arcade_flipped(ez::SINGLE);   // Flipped single arcade
     // . . .
     // Put more user control code here!
@@ -262,18 +262,18 @@ void opcontrol() {
     }
     ChainBar_1.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
     ChainBar_2.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-    if (master.get_digital(DIGITAL_L1)) {
+    if (master.get_digital(DIGITAL_R1)) {
       ChainBar_1.move(127);
       ChainBar_2.move(127);
-    } else if (master.get_digital(DIGITAL_L2)) {
+    } else if (master.get_digital(DIGITAL_R2)) {
       ChainBar_1.move(-127);
-      ChainBar_2.move(-127);
+      ChainBar_2.move(127);
     } else {
       ChainBar_1.brake();
       ChainBar_2.brake();
     }
     if (master.get_digital(DIGITAL_B)) {
-      intake.move(127);
+      intake.move(-127);
     }
     if (master.get_digital(DIGITAL_Y)) {
       intake.brake();
