@@ -260,17 +260,13 @@ void opcontrol() {
     } else {
       Hmotor.move(0);
     }
-    ChainBar_1.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-    ChainBar_2.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    chainbar.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
     if (master.get_digital(DIGITAL_R1)) {
-      ChainBar_1.move(127);
-      ChainBar_2.move(127);
+      chainbar.move(127);
     } else if (master.get_digital(DIGITAL_R2)) {
-      ChainBar_1.move(-127);
-      ChainBar_2.move(127);
+      chainbar.move(-127);
     } else {
-      ChainBar_1.brake();
-      ChainBar_2.brake();
+      chainbar.brake();
     }
     if (master.get_digital(DIGITAL_B)) {
       intake.move(-127);
