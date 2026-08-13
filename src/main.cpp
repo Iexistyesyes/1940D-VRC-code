@@ -278,10 +278,10 @@ void opcontrol() {
       intake.move(127);
     }
     if (master.get_digital(DIGITAL_RIGHT)) {
-      Claw.set_value(true);
+      Claw.set(true);
     }
     if (master.get_digital(DIGITAL_LEFT)) {
-      Claw.set_value(false);
+      Claw.set(false);
     }
   }
 
