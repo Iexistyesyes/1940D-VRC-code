@@ -277,6 +277,12 @@ void opcontrol() {
     if (master.get_digital(DIGITAL_A)) {
       intake.move(127);
     }
+    if (master.get_digital(DIGITAL_RIGHT)) {
+      Claw.set_value(true);
+    }
+    if (master.get_digital(DIGITAL_LEFT)) {
+      Claw.set_value(false);
+    }
   }
 
   pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME

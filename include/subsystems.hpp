@@ -13,3 +13,4 @@ inline pros::adi::DigitalIn limit_switch('A');
 inline pros::Motor Cascade(8);
 inline pros::MotorGroup chainbar({4, -7});
 inline pros::Motor Hmotor(3);
+inline ez::Piston Claw('A');
