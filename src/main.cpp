@@ -260,7 +260,7 @@ void opcontrol() {
     } else {
       Hmotor.move(0);
     }
-    chainbar.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    chainbar.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
     if (master.get_digital(DIGITAL_R1)) {
       chainbar.move(127);
     } else if (master.get_digital(DIGITAL_R2)) {
