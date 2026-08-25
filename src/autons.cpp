@@ -108,26 +108,23 @@ void measure_offsets() {
   if (chassis.odom_tracker_back != nullptr) chassis.odom_tracker_back->distance_to_center_set(b_offset);
   if (chassis.odom_tracker_front != nullptr) chassis.odom_tracker_front->distance_to_center_set(f_offset);
 }
-void tag_43_auton_blue() {
-  chassis.odom_xyt_set(100_cm, 167_cm, 180_deg);  // Set starting position for odometry (if using)
-  chassis.pid_odom_set({{100_cm, 139_cm, 135_deg}, fwd, 110});  // Drive to a point on the field at a set speed
-  chassis.pid_odom_set({{110_cm,125_cm}, fwd, 70});
-  chassis.pid_odom_set({{100_cm, 139_cm}, rev, 70});
-  chassis.pid_odom_set({{73_cm, 121_cm}, fwd, 70});
-  chassis.pid_odom_set({{-46.725_cm, 129.271_cm, 235_deg}, fwd, 127});
-  Cascade.move(127);
-  pros::delay(2000);
-  Cascade.brake();
-  // tuff boi edit
-}
-
 void tag_12_auton_blue() {
-  // Example of a simple auton that turns to a specific angle and drives forward
   chassis.odom_xyt_set(170_cm, 0_cm, 0_deg);  // Set starting position for odometry (if using)
-}
-
-void tag_43_auton_red() {
-  chassis.odom_xyt_set(-120_cm, -170_cm, 90_deg);  // Set starting position for odometry (if using)
+  chassis.pid_odom_set({{143_cm, -14_cm, 225_deg}, fwd, 110});  // Drive to a point on the field at a set speed
+  chassis.pid_odom_set({{132_cm, -47_cm, 225_deg}, fwd, 110});
+  chassis.pid_odom_set({{161_cm, -61_cm, 270_deg}, rev, 110});
+  chassis.pid_odom_set({{135_cm, -60_cm, 90_deg}, fwd, 110});
+  chassis.pid_odom_set({{163_cm, -69_cm, 90_deg}, rev, 110});
+  chassis.pid_odom_set({{135_cm, -60_cm, 90_deg}, fwd, 110});
+  chassis.pid_odom_set({{121_cm, -97_cm, 180_deg}, fwd, 110});
+  chassis.pid_odom_set({{121_cm, -75_cm, 180_deg}, rev, 110});
+  chassis.pid_odom_set({{140_cm, -110_cm, 180_deg}, fwd, 110});
+  chassis.pid_odom_set({{140_cm, 34_cm, 180_deg}, rev, 110});
+  chassis.pid_odom_set({{127_cm, 49_cm, 135_deg}, rev, 110});
+  chassis.pid_odom_set({{161_cm, 59_cm, 270_deg}, rev, 110});
+  chassis.pid_odom_set({{140_cm, 34_cm, 270_deg}, fwd, 110});
+  chassis.pid_odom_set({{153_cm, 0_cm, 90_deg}, fwd, 110});
+  chassis.pid_odom_set({{175_cm, 0_cm, 90_deg}, rev, 110});
 }
 
 void tag_12_auton_red() {
