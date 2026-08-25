@@ -8,10 +8,10 @@
 // Chassis constructor
 ez::Drive chassis(
     // These are your drive motors, the first motor is used for sensing!
-    {-2, -1},    // Left Chassis Ports (negative port will reverse it!)
+    {-2, -3},    // Left Chassis Ports (negative port will reverse it!)
     {10, 9},  // Right Chassis Ports (negative port will reverse it!)
 
-    5,     // IMU Port
+    19,     // IMU Port
     3.25,  // Wheel Diameter (Remember, 4" wheels without screw holes are actually 4.125!)
     600);  // Wheel RPM = cartridge * (motor gear / wheel gear)
 
@@ -21,7 +21,7 @@ ez::Drive chassis(
 // - `2.75` is the wheel diameter
 // - `4.0` is the distance from the center of the wheel to the center of the robot
 // ez::tracking_wheel horiz_tracker(8, 2.75, 4.0);  // This tracking wheel is perpendicular to the drive wheels
-ez::tracking_wheel vert_tracker(6, 2.75, 4.0);  // This tracking wheel is parallel to the drive wheels
+ez::tracking_wheel vert_tracker(20, 2.75, 4.0);  // This tracking wheel is parallel to the drive wheels
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
