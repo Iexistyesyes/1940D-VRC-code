@@ -242,7 +242,7 @@ void opcontrol() {
     // . . .
     // Put more user control code here!
     // . . .
-    Cascade.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    Cascade.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); //sets the brake mode of the cascade motor
     if (master.get_digital(DIGITAL_L1)) {
       Cascade.move(127);
     } else if (master.get_digital(DIGITAL_L2)) {
@@ -250,8 +250,8 @@ void opcontrol() {
     } else {
       Cascade.brake();
     }
-    Hmotor.move(master.get_analog(ANALOG_LEFT_X));
-    chainbar.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    Hmotor.move(master.get_analog(ANALOG_LEFT_X)); //controls the horizontal motor with the left joystick
+    chainbar.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); //sets the brake mode of the chainbar motor
     if (master.get_digital(DIGITAL_R1)) {
       chainbar.move(127);
     } else if (master.get_digital(DIGITAL_R2)) {
