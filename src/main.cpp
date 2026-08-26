@@ -250,19 +250,14 @@ void opcontrol() {
     } else {
       Cascade.brake();
     }
-    if (master.get_analog(ANALOG_LEFT_X) > 20) {
-     Hmotor.move(127);
-    } else if (master.get_analog(ANALOG_LEFT_X) < -20) {
-      Hmotor.move(-127);
-    } else {
-      Hmotor.move(0);
-    }
+    Hmotor.move(master.get_analog(ANALOG_LEFT_X));
     chainbar.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
     if (master.get_digital(DIGITAL_R1)) {
       chainbar.move(127);
     } else if (master.get_digital(DIGITAL_R2)) {
       chainbar.move(-127);
-    } else {
+    } 
+    else {
       chainbar.brake();
     }
     if (master.get_digital(DIGITAL_B)) {
