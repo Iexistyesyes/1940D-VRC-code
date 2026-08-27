@@ -250,7 +250,6 @@ void opcontrol() {
     } else {
       Cascade.brake();
     }
-    Hmotor.move(master.get_analog(ANALOG_LEFT_X)); //controls the horizontal motor with the left joystick
     chainbar.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); //sets the brake mode of the chainbar motor
     if (master.get_digital(DIGITAL_R1)) {
       chainbar.move(127);

@@ -12,5 +12,4 @@ inline pros::adi::DigitalIn limit_switch('A');
 // inline pros::Vision vision_sensor1(20);
 inline pros::Motor Cascade(8);
 inline pros::MotorGroup chainbar({4, -7});
-inline pros::Motor Hmotor(1);
 inline ez::Piston Claw('A');
