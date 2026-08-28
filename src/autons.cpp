@@ -109,37 +109,9 @@ void measure_offsets() {
   if (chassis.odom_tracker_front != nullptr) chassis.odom_tracker_front->distance_to_center_set(f_offset);
 }
 void tag_12_auton_blue() {
-  chassis.odom_xyt_set(170_cm, 0_cm, 0_deg);  // Set starting position for odometry (if using)
-  chassis.pid_odom_set({{143_cm, -14_cm, 225_deg}, fwd, 110});  // Drive to a point on the field at a set speed
+  chassis.odom_xyt_set(170_cm, 0_cm, 270_deg);  // Set starting position for odometry (if using)
   chassis.pid_wait();
-  chassis.pid_odom_set({{132_cm, -47_cm, 225_deg}, fwd, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{161_cm, -61_cm, 270_deg}, rev, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{135_cm, -60_cm, 90_deg}, fwd, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{163_cm, -69_cm, 90_deg}, rev, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{135_cm, -60_cm, 90_deg}, fwd, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{121_cm, -97_cm, 180_deg}, fwd, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{121_cm, -75_cm, 180_deg}, rev, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{140_cm, -110_cm, 180_deg}, fwd, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{140_cm, 34_cm, 180_deg}, rev, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{127_cm, 49_cm, 135_deg}, rev, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{161_cm, 59_cm, 270_deg}, rev, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{140_cm, 34_cm, 270_deg}, fwd, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{153_cm, 0_cm, 90_deg}, fwd, 110});
-  chassis.pid_wait();
-  chassis.pid_odom_set({{175_cm, 0_cm, 90_deg}, rev, 110});
-  chassis.pid_wait();
+
 }
 
 void tag_12_auton_red() {
