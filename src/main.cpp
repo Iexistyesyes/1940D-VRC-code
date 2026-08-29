@@ -86,7 +86,9 @@ void disabled() {
  * starts.
  */
 void competition_initialize() {
-  // . . .
+  chassis.imu.reset();  // Reset the IMU so that it starts at 0 degrees
+  chainbar.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
+  Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
 }
 
 /**
