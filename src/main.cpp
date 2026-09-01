@@ -17,8 +17,8 @@ void on_center_button() {
 	}
 }
 // INITIALISATION DO NOT TOUCH
-pros::MotorGroup left_motors({2, 3}, pros::MotorGearset::green); // left motors on ports 2, 3
-pros::MotorGroup right_motors({9, 10}, pros::MotorGearset::green); // right motors on ports 9, 10
+pros::MotorGroup left_motors({2, 3}, pros::MotorGearset::blue); // left motors on ports 2, 3
+pros::MotorGroup right_motors({9, 10}, pros::MotorGearset::blue); // right motors on ports 9, 10
 lemlib::Drivetrain drivetrain(&left_motors, // left motor group
                               &right_motors, // right motor group
                               10, // 10 inch track width
