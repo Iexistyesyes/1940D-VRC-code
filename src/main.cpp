@@ -22,7 +22,7 @@ pros::MotorGroup right_motors({9, 10}, pros::MotorGearset::green); // right moto
 lemlib::Drivetrain drivetrain(&left_motors, // left motor group
                               &right_motors, // right motor group
                               10, // 10 inch track width
-                              lemlib::Omniwheel::NEW_325, //new 3.25" omnis
+                              lemlib::Omniwheel::NEW_325, //new 3.25" omnisx
                               360, // drivetrain rpm is 360
                               2 // horizontal drift is 2 (for now)
 );
@@ -67,6 +67,7 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         sensors // odometry sensors
 );
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
+pros::MotorGroup Cascade({1, -8}, pros::MotorGearset::green); // cascade motors on ports 4, 5
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -143,7 +144,13 @@ void opcontrol() {
         // move the robot
         // prioritize steering slightly
         chassis.arcade(leftY, leftX, false, 0.75);
-
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+            Cascade.move_velocity(200);
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+            Cascade.move_velocity(-200);
+        } else {
+            Cascade.move_velocity(0);
+        }
         // delay to save resources
         pros::delay(25);
     }
