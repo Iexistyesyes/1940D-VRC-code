@@ -67,7 +67,10 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         sensors // odometry sensors
 );
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup Cascade({1, -8}, pros::MotorGearset::green); // cascade motors on ports 4, 5
+pros::MotorGroup Cascade({1, -8}, pros::MotorGearset::green); // cascade motors on ports 1, 8
+pros::Motor Claw(20);
+pros::Distance ClawSense(12);
+int CascadeUp = 0;
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -84,6 +87,10 @@ void initialize() {
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+            pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
+            pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
+            pros::lcd::print(5, "ClawSense: %d", ClawSense.get_distance()); // claw sensor
+            pros::lcd::print(6, "CascadeUp: %d", CascadeUp); // cascade up
             // delay to save resources
             pros::delay(20);
         }
@@ -140,7 +147,13 @@ void opcontrol() {
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
-
+        pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
+        pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
+        pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+        pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
+        pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
+        pros::lcd::print(5, "ClawSense: %d", ClawSense.get_distance()); // claw sensor
+        pros::lcd::print(6, "CascadeUp: %d", CascadeUp); // cascade up
         // move the robot
         // prioritize steering slightly
         chassis.arcade(leftY, leftX, false, 0.75);
@@ -150,6 +163,21 @@ void opcontrol() {
             Cascade.move_velocity(-200);
         } else {
             Cascade.move_velocity(0);
+        }
+        if (ClawSense.get_distance() < 100) { // adjust threshold as needed
+            Claw.move_absolute(270, 100);
+            CascadeUp = 0;
+        }
+        if (ClawSense.get_distance() >= 100 and CascadeUp != 1) { // adjust threshold as needed
+            Claw.move_absolute(0, 100);
+            CascadeUp = 1;
+        }
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+            Claw.move_velocity(200);
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+            Claw.move_velocity(-200);
+        } else {
+            Claw.move_velocity(0);
         }
         // delay to save resources
         pros::delay(25);
