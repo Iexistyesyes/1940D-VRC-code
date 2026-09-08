@@ -70,7 +70,10 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup Cascade({1, -8}, pros::MotorGearset::green); // cascade motors on ports 1, 8
 pros::Motor Claw(20);
 pros::Distance ClawSense(12);
-int CascadeUp = 0;
+pros::Rotation ClawRot(2);
+int CascadeUp = 1;
+double dist = 0;
+double ClawRotate = 0;
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -81,20 +84,20 @@ void initialize() {
     pros::lcd::initialize(); // initialize brain screen
     chassis.calibrate(); // calibrate sensors
     // print position to brain screen
-    pros::Task screen_task([&]() {
-        while (true) {
-            // print robot location to the brain screen
-            pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
-            pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-            pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
-            pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
-            pros::lcd::print(5, "ClawSense: %d", ClawSense.get_distance()); // claw sensor
-            pros::lcd::print(6, "CascadeUp: %d", CascadeUp); // cascade up
-            // delay to save resources
-            pros::delay(20);
-        }
-    });
+    // pros::Task screen_task([&]() {
+    //     while (true) {
+    //         // print robot location to the brain screen
+    //         pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
+    //         pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
+    //         pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+    //         pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
+    //         pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
+    //         pros::lcd::print(5, "Distance Value: %d mm\n", ClawSense.get_distance());
+    //         pros::lcd::print(6, "CascadeUp: %d", CascadeUp); // cascade up
+    //         // delay to save resources
+    //         pros::delay(20);
+    //     }
+    // });
 }
 
 /**
@@ -128,6 +131,7 @@ void competition_initialize() {}
  */
 void autonomous() {}
 
+
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -142,18 +146,39 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+
+    // pros::Task screen_task([&]() {
+    //     while (true) {
+    //         // print robot location to the brain screen
+    //         pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
+    //         pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
+    //         pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+    //         pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
+    //         pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
+    //         pros::lcd::print(5, "Distance Value: %d mm\n", ClawSense.get_distance());
+    //         pros::lcd::print(6, "CascadeUp: %d\n", CascadeUp); // cascade up
+    //         // delay to save resources
+    //         pros::delay(20);
+    //     }
+    // });
+    pros::Task Sense_Task([&]() {
+        while (true) {
+            dist = ClawSense.get_distance();
+            ClawRotate = ClawRot.get_position();
+            printf("distance: %d\n", ClawSense.get_distance());
+            printf("Rotation: %lf\n", ClawRot.get_angle()/100.0);
+            ClawRotate /100.0;
+            dist /100.0;
+            pros::delay(20);
+        }
+    });
     // loop forever
+    ClawRot.reset_position();
     while (true) {
+        ClawRotate = ClawRot.get_position();
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
-        pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
-        pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-        pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-        pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
-        pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
-        pros::lcd::print(5, "ClawSense: %d", ClawSense.get_distance()); // claw sensor
-        pros::lcd::print(6, "CascadeUp: %d", CascadeUp); // cascade up
         // move the robot
         // prioritize steering slightly
         chassis.arcade(leftY, leftX, false, 0.75);
@@ -164,18 +189,24 @@ void opcontrol() {
         } else {
             Cascade.move_velocity(0);
         }
-        if (ClawSense.get_distance() < 100) { // adjust threshold as needed
-            Claw.move_absolute(270, 100);
+        if (dist < 100 and CascadeUp) { 
+            while (ClawRotate > 10) {
+                Claw.move(60);
+            }
+            Claw.brake();
             CascadeUp = 0;
         }
-        if (ClawSense.get_distance() >= 100 and CascadeUp != 1) { // adjust threshold as needed
-            Claw.move_absolute(0, 100);
+        if (dist > 100 and CascadeUp != 1) {
+            while (ClawRotate < 80) {
+                Claw.move(60);
+            }
+            Claw.brake();
             CascadeUp = 1;
         }
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-            Claw.move_velocity(200);
+            Claw.move_velocity(15);
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-            Claw.move_velocity(-200);
+            Claw.move_velocity(-15);
         } else {
             Claw.move_velocity(0);
         }
