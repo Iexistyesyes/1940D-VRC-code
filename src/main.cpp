@@ -18,7 +18,7 @@ void on_center_button() {
 }
 // INITIALISATION DO NOT TOUCH
 pros::MotorGroup left_motors({2, 3}, pros::MotorGearset::blue); // left motors on ports 2, 3
-pros::MotorGroup right_motors({9, 10}, pros::MotorGearset::blue); // right motors on ports 9, 10
+pros::MotorGroup right_motors({4, 5}, pros::MotorGearset::blue); // right motors on ports 9, 10
 lemlib::Drivetrain drivetrain(&left_motors, // left motor group
                               &right_motors, // right motor group
                               10, // 10 inch track width
@@ -26,9 +26,9 @@ lemlib::Drivetrain drivetrain(&left_motors, // left motor group
                               360, // drivetrain rpm is 360
                               2 // horizontal drift is 2 (for now)
 );
-pros::Imu imu(19);
-pros::Rotation vertical_encoder(20);
-pros::Rotation horizontal_encoder(18);
+pros::Imu imu(6);
+pros::Rotation vertical_encoder(7);
+pros::Rotation horizontal_encoder(14);
 lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, 2.5); // horizontal tracking wheel, 2.
 lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_2, -2.5);
 lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
@@ -67,13 +67,13 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         sensors // odometry sensors
 );
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup Cascade({1, -8}, pros::MotorGearset::green); // cascade motors on ports 1, 8
-pros::Motor Claw(20);
-pros::Distance ClawSense(12);
-pros::Rotation ClawRot(2);
-int CascadeUp = 1;
-double dist = 0;
-double ClawRotate = 0;
+pros::MotorGroup Cascade({1, -10}, pros::MotorGearset::red); // cascade motors on ports 1, 8
+pros::Motor Claw({19}, pros::MotorGearset::green);
+pros::Motor Pickup(20);
+pros::Motor IntakeFront(18);
+pros::Motor IntakeBottom(17);
+int ButtonYes1 = 1;
+int ButtonYes2 = 1;
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -146,7 +146,7 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-
+    Claw.set_zero_position(0);
     // pros::Task screen_task([&]() {
     //     while (true) {
     //         // print robot location to the brain screen
@@ -161,27 +161,15 @@ void opcontrol() {
     //         pros::delay(20);
     //     }
     // });
-    pros::Task Sense_Task([&]() {
-        while (true) {
-            dist = ClawSense.get_distance();
-            ClawRotate = ClawRot.get_position();
-            printf("distance: %d\n", ClawSense.get_distance());
-            printf("Rotation: %lf\n", ClawRot.get_angle()/100.0);
-            ClawRotate /100.0;
-            dist /100.0;
-            pros::delay(20);
-        }
-    });
     // loop forever
-    ClawRot.reset_position();
     while (true) {
-        ClawRotate = ClawRot.get_position();
+        Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
+        int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         // move the robot
         // prioritize steering slightly
-        chassis.arcade(leftY, leftX, false, 0.75);
+        chassis.arcade(-leftX, -leftY, false, 0.75);
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
             Cascade.move_velocity(200);
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
@@ -189,27 +177,42 @@ void opcontrol() {
         } else {
             Cascade.move_velocity(0);
         }
-        if (dist < 100 and CascadeUp) { 
-            while (ClawRotate > 10) {
-                Claw.move(60);
-            }
-            Claw.brake();
-            CascadeUp = 0;
+        if (Cascade.get_position() > 325) { 
+            Claw.move_absolute(0, 80);
         }
-        if (dist > 100 and CascadeUp != 1) {
-            while (ClawRotate < 80) {
-                Claw.move(60);
-            }
-            Claw.brake();
-            CascadeUp = 1;
+        if (Cascade.get_position() < 335) {
+            Claw.move_absolute(490, 80);
         }
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-            Claw.move_velocity(15);
+            Pickup.move_velocity(120);
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-            Claw.move_velocity(-15);
+            Pickup.move_velocity(-120);
         } else {
-            Claw.move_velocity(0);
+            Pickup.move_velocity(0);
         }
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+            IntakeFront.move_velocity(-127);
+            IntakeBottom.move_velocity(127);
+        }
+        else {
+            IntakeFront.brake();
+            IntakeBottom.brake();
+        }
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
+            IntakeFront.move_velocity(-127);
+            IntakeBottom.move_velocity(127);
+        }
+        else {
+            IntakeFront.brake();
+            IntakeBottom.brake();
+        }
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+            Claw.move_velocity(-127);
+        }
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+            Claw.move_velocity(-127);
+        }
+
         // delay to save resources
         pros::delay(25);
     }
