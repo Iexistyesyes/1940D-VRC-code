@@ -84,20 +84,18 @@ void initialize() {
     pros::lcd::initialize(); // initialize brain screen
     chassis.calibrate(); // calibrate sensors
     // print position to brain screen
-    // pros::Task screen_task([&]() {
-    //     while (true) {
-    //         // print robot location to the brain screen
-    //         pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
-    //         pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-    //         pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-    //         pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
-    //         pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
-    //         pros::lcd::print(5, "Distance Value: %d mm\n", ClawSense.get_distance());
-    //         pros::lcd::print(6, "CascadeUp: %d", CascadeUp); // cascade up
-    //         // delay to save resources
-    //         pros::delay(20);
-    //     }
-    // });
+    pros::Task screen_task([&]() {
+        while (true) {
+            // print robot location to the brain screen
+            pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
+            pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
+            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+            pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
+            pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
+            // delay to save resources
+            pros::delay(20);
+        }
+    });
 }
 
 /**
@@ -146,6 +144,7 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+// <<<<<<< HEAD
     Claw.set_zero_position(0);
     // pros::Task screen_task([&]() {
     //     while (true) {
@@ -161,6 +160,8 @@ void opcontrol() {
     //         pros::delay(20);
     //     }
     // });
+ //=======
+
     // loop forever
     while (true) {
         Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
@@ -172,22 +173,26 @@ void opcontrol() {
         chassis.arcade(-leftX, -leftY, false, 0.75);
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
             Cascade.move_velocity(200);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+        } 
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
             Cascade.move_velocity(-200);
-        } else {
+        } 
+        else {
             Cascade.move_velocity(0);
         }
-        if (Cascade.get_position() > 325) { 
-            Claw.move_absolute(0, 80);
+        if (Cascade.get_position() > 300) { 
+            Claw.move_absolute(620, 80);
         }
-        if (Cascade.get_position() < 335) {
-            Claw.move_absolute(490, 80);
+        if (Cascade.get_position() < 290) {
+            Claw.move_absolute(0, 80);
         }
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
             Pickup.move_velocity(120);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+        }  
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
             Pickup.move_velocity(-120);
-        } else {
+        } 
+        else {
             Pickup.move_velocity(0);
         }
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
