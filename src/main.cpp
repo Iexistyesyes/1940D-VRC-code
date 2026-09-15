@@ -7,38 +7,7 @@
  * When this callback is fired, it will toggle line 2 of the LCD text between
  * "I was pressed!" and nothing.
  */
-int Autonselect = 0;
-void on_center_button() {
-	static bool pressed = false;
-	pressed = !pressed;
-	if (pressed) {
-		pros::lcd::set_text(2, "Buttons are working :D");
-	} else {
-		pros::lcd::clear_line(2);
-	}
-}
-void on_right_button() {
-    static bool pressed = false;
-    pressed = !pressed;
-    if (pressed) {
-        pros::lcd::set_text(2, "right quad auton");
-        Autonselect = 1;
-    }
-    else {
-        pros::lcd::clear_line(2);
-    }
-}
-void on_left_button() {
-    static bool pressed = false;
-    pressed = !pressed;
-    if (pressed) {
-        pros::lcd::set_text(2, "left quad auton");
-        Autonselect = 2;
-    }
-    else {
-        pros::lcd::clear_line(2);
-    }
-}
+int autonSelected = 0;
 // INITIALISATION DO NOT TOUCH
 pros::MotorGroup left_motors({2, 3}, pros::MotorGearset::blue); // left motors on ports 2, 3
 pros::MotorGroup right_motors({4, 5}, pros::MotorGearset::blue); // right motors on ports 9, 10
@@ -90,7 +59,7 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         sensors // odometry sensors
 );
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup Cascade({1, -10}, pros::MotorGearset::red); // cascade motors on ports 1, 8
+pros::MotorGroup Cascade({1, -10}, pros::MotorGearset::green); // cascade motors on ports 1, 8
 pros::Motor Claw({19}, pros::MotorGearset::green);
 pros::Motor Pickup(20);
 pros::Motor IntakeFront(18);
@@ -103,9 +72,53 @@ int ButtonYes2 = 1;
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
+void autonSelector() {
+
+    while (true) {
+
+        if (pros::lcd::read_buttons() == LCD_BTN_LEFT) {
+            autonSelected--;
+
+            if (autonSelected < 0) {
+                autonSelected = 3;
+            }
+
+            pros::delay(250);
+        }
+
+        if (pros::lcd::read_buttons() == LCD_BTN_RIGHT) {
+            autonSelected++;
+
+            if (autonSelected > 3) {
+                autonSelected = 0;
+            }
+
+            pros::delay(250);
+        }
+
+        switch (autonSelected) {
+
+            case 0:
+                pros::lcd::print(0, "Auton: Right Quad");
+                break;
+
+            case 1:
+                pros::lcd::print(0, "Auton: Left Quad");
+                break;
+
+            case 2:
+                pros::lcd::print(0, "Auton: Skills");
+                break;
+
+        }
+
+        pros::delay(20);
+    }
+}
 void initialize() {
     pros::lcd::initialize(); // initialize brain screen
     chassis.calibrate(); // calibrate sensors
+    pros::Task autonTask(autonSelector);
     // print position to brain screen
     pros::Task screen_task([&]() {
         while (true) {
@@ -115,6 +128,7 @@ void initialize() {
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
             pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
             pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
+            pros::lcd::print(5, "Auton: Red Left");
             // delay to save resources
             pros::delay(20);
         }
@@ -128,7 +142,20 @@ void initialize() {
  */
 void disabled() {
     Claw.move_absolute(0,127);
+
 }
+void Right_Quad() {
+    // Im so smart trust I realised I can just use one auton for both opposing quadrants and It will still work the same :D
+
+}
+void Left_Quad() {
+    // Just Mirrored it because Im lazy
+
+}
+void Skills() {
+    // Need to finish LOL
+}
+
 
 /**
  * Runs after initialize(), and before autonomous when connected to the Field
@@ -152,7 +179,19 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+    switch (autonSelected) {
+        case 0:
+            Right_Quad();
+            break;
+        case 1:
+            Left_Quad();
+            break;
+        case 2:
+            Skills();
+            break;
+    }
+}
 
 
 /**
@@ -169,27 +208,11 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-// <<<<<<< HEAD
     Claw.set_zero_position(0);
-    // pros::Task screen_task([&]() {
-    //     while (true) {
-    //         // print robot location to the brain screen
-    //         pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
-    //         pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-    //         pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-    //         pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
-    //         pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
-    //         pros::lcd::print(5, "Distance Value: %d mm\n", ClawSense.get_distance());
-    //         pros::lcd::print(6, "CascadeUp: %d\n", CascadeUp); // cascade up
-    //         // delay to save resources
-    //         pros::delay(20);
-    //     }
-    // });
- //=======
-        Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
+    Claw.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
     // loop forever
     while (true) {
-
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
@@ -197,44 +220,41 @@ void opcontrol() {
         // prioritize steering slightly
         chassis.arcade(-leftX, -leftY, false, 0.75);
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-            Cascade.move_velocity(127);
-        } 
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-            Cascade.move_velocity(-127);
+            Cascade.move_voltage(12000);
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+            Cascade.move_voltage(-12000);
         } 
         else {
-            Cascade.move_velocity(0);
+            Cascade.move(0);
         }
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
             Pickup.move_velocity(120);
-        }  
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+        }  else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
             Pickup.move_velocity(-120);
         } 
         else {
             Pickup.move_velocity(0);
         }
+        if (Cascade.get_position() > 50) {
+            Claw.move_absolute(565, 127);
+        }
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
-            IntakeFront.move_velocity(-127);
-            IntakeBottom.move_velocity(127);
-        }
-        else {
+            IntakeFront.move_voltage(-12000);
+            IntakeBottom.move_voltage(12000);
+            Pickup.move_voltage(-12000);
+            Claw.move_absolute(0, 127);
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
+            IntakeFront.move_voltage(12000);
+            IntakeBottom.move_voltage(12000);
+            Pickup.move_voltage(-12000);
+            Claw.move_absolute(0, 127);
+        } else {
             IntakeFront.brake();
             IntakeBottom.brake();
-        }
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
-            IntakeFront.move_velocity(-127);
-            IntakeBottom.move_velocity(127);
-        }
-        else {
-            IntakeFront.brake();
-            IntakeBottom.brake();
+            Pickup.brake();
         }
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
-            Claw.move_velocity(-127);
-        }
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-            Claw.move_velocity(-127);
+            Pickup.move_voltage(12000);
         }
 
         // delay to save resources
