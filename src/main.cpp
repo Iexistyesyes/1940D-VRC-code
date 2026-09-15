@@ -80,7 +80,7 @@ void autonSelector() {
             autonSelected--;
 
             if (autonSelected < 0) {
-                autonSelected = 3;
+                autonSelected = 2;
             }
 
             pros::delay(250);
@@ -99,15 +99,15 @@ void autonSelector() {
         switch (autonSelected) {
 
             case 0:
-                pros::lcd::print(0, "Auton: Right Quad");
+                pros::lcd::print(5, "Auton: Right Quad");
                 break;
 
             case 1:
-                pros::lcd::print(0, "Auton: Left Quad");
+                pros::lcd::print(5, "Auton: Left Quad");
                 break;
 
             case 2:
-                pros::lcd::print(0, "Auton: Skills");
+                pros::lcd::print(5, "Auton: Skills");
                 break;
 
         }
@@ -140,17 +140,35 @@ void initialize() {
  * the VEX Competition Switch, following either autonomous or opcontrol. When
  * the robot is enabled, this task will exit.
  */
+ASSET(Left_Path_1_txt);
+ASSET(Left_Path_2_txt);
+ASSET(Left_Path_3_txt);
+ASSET(Left_Path_4_txt);
+ASSET(Right_Path_1_txt);
+ASSET(Right_Path_2_txt);
+ASSET(Right_Path_3_txt);
+ASSET(Right_Path_4_txt);
 void disabled() {
     Claw.move_absolute(0,127);
 
 }
 void Right_Quad() {
     // Im so smart trust I realised I can just use one auton for both opposing quadrants and It will still work the same :D
-
+    chassis.setPose(0, 65, 180);
+    chassis.follow(Right_Path_1_txt, 15, 2000);
+    Claw.move_absolute(565, 127);
+    chassis.follow(Right_Path_2_txt, 15, 2000);
+    Pickup.move_voltage(12000);
 }
 void Left_Quad() {
     // Just Mirrored it because Im lazy
-
+    chassis.setPose(0, 65, 0);
+    chassis.follow(Left_Path_1_txt, 15, 2000);
+    Claw.move_absolute(565, 127);
+    chassis.follow(Left_Path_2_txt, 15, 2000);
+    Pickup.move_voltage(12000);
+    chassis.follow(Left_Path_3_txt, 15, 2000);
+    chassis.follow(Left_Path_4_txt, 15, 2000);
 }
 void Skills() {
     // Need to finish LOL
