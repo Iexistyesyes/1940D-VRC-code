@@ -172,6 +172,7 @@ void Left_Quad() {
 }
 void Skills() {
     // Need to finish LOL
+    // Might do on Wednesday
 }
 
 
