@@ -637,7 +637,7 @@
     "upload_options": {
       "description": "Comp Code :)",
       "icon": "pros",
-      "slot": 2
+      "slot": 1
     },
     "use_early_access": false
   }

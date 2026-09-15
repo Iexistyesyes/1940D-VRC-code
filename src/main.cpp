@@ -7,14 +7,37 @@
  * When this callback is fired, it will toggle line 2 of the LCD text between
  * "I was pressed!" and nothing.
  */
+int Autonselect = 0;
 void on_center_button() {
 	static bool pressed = false;
 	pressed = !pressed;
 	if (pressed) {
-		pros::lcd::set_text(2, "I was pressed!");
+		pros::lcd::set_text(2, "Buttons are working :D");
 	} else {
 		pros::lcd::clear_line(2);
 	}
+}
+void on_right_button() {
+    static bool pressed = false;
+    pressed = !pressed;
+    if (pressed) {
+        pros::lcd::set_text(2, "right quad auton");
+        Autonselect = 1;
+    }
+    else {
+        pros::lcd::clear_line(2);
+    }
+}
+void on_left_button() {
+    static bool pressed = false;
+    pressed = !pressed;
+    if (pressed) {
+        pros::lcd::set_text(2, "left quad auton");
+        Autonselect = 2;
+    }
+    else {
+        pros::lcd::clear_line(2);
+    }
 }
 // INITIALISATION DO NOT TOUCH
 pros::MotorGroup left_motors({2, 3}, pros::MotorGearset::blue); // left motors on ports 2, 3
@@ -103,7 +126,9 @@ void initialize() {
  * the VEX Competition Switch, following either autonomous or opcontrol. When
  * the robot is enabled, this task will exit.
  */
-void disabled() {}
+void disabled() {
+    Claw.move_absolute(0,127);
+}
 
 /**
  * Runs after initialize(), and before autonomous when connected to the Field
@@ -161,10 +186,10 @@ void opcontrol() {
     //     }
     // });
  //=======
-
+        Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
     // loop forever
     while (true) {
-        Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
+
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
@@ -172,19 +197,13 @@ void opcontrol() {
         // prioritize steering slightly
         chassis.arcade(-leftX, -leftY, false, 0.75);
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-            Cascade.move_velocity(200);
+            Cascade.move_velocity(127);
         } 
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-            Cascade.move_velocity(-200);
+            Cascade.move_velocity(-127);
         } 
         else {
             Cascade.move_velocity(0);
-        }
-        if (Cascade.get_position() > 300) { 
-            Claw.move_absolute(620, 80);
-        }
-        if (Cascade.get_position() < 290) {
-            Claw.move_absolute(0, 80);
         }
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
             Pickup.move_velocity(120);
