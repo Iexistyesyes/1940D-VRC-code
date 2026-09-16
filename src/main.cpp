@@ -76,59 +76,66 @@ int ButtonYes2 = 1;
 void autonSelector() {
     while (true) {
         int buttons = pros::lcd::read_buttons();
+        buttons = buttons - 216;
+        if (buttons & LCD_BTN_LEFT) {
+            autonSelected--;
 
-        pros::lcd::print(6, "Buttons: %d", buttons);
+            if (autonSelected < 0) {
+                autonSelected = 2;
+            }
 
-        if (buttons == LCD_BTN_LEFT) {
-            pros::lcd::print(7, "LEFT!");
-        }
-        else if (buttons == LCD_BTN_RIGHT) {
-            pros::lcd::print(7, "RIGHT!");
-        }
-        else if (buttons == LCD_BTN_CENTER) {
-            pros::lcd::print(7, "CENTER!");
-        }
-        else if (buttons == 0) {
-            pros::lcd::print(7, "NONE");
-        }
-        else {
-            pros::lcd::print(7, "UNKNOWN");
+            pros::delay(250);
         }
 
-        pros::delay(50);
+        if (buttons & LCD_BTN_RIGHT) {
+            autonSelected++;
+
+            if (autonSelected > 2) {
+                autonSelected = 0;
+            }
+
+            pros::delay(250);
+        }
+
+
+        switch (autonSelected) {
+
+            case 0:
+                pros::lcd::print(5, "Auton: Right Quad");
+                break;
+
+            case 1:
+                pros::lcd::print(5, "Auton: Left Quad");
+                break;
+
+            case 2:
+                pros::lcd::print(5, "Auton: Skills");
+                break;
+
+        }
+
+        pros::delay(20);
     }
 }
-// void initialize() {
-//     pros::lcd::initialize(); // initialize brain screen
-//     chassis.calibrate(); // calibrate sensors
-//     pros::Task autonTask(autonSelector);
-//     // print position to brain screen
-//     pros::Task screen_task([&]() {
-//         while (true) {
-//             // print robot location to the brain screen
-//             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
-//             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-//             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-//             pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
-//             pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
-//             int buttons = pros::lcd::read_buttons();
-//             pros::lcd::print(6, "Buttons: %d", buttons);
-//             // delay to save resources
-//             pros::delay(20);
-//         }
-//     });
-// }
 void initialize() {
-    pros::lcd::initialize();
-
-    while (true) {
-        int buttons = pros::lcd::read_buttons();
-
-        pros::lcd::print(0, "Buttons: %d", buttons);
-
-        pros::delay(50);
-    }
+    pros::lcd::initialize(); // initialize brain screen
+    chassis.calibrate(); // calibrate sensors
+    pros::Task autonTask(autonSelector);
+    // print position to brain screen
+    pros::Task screen_task([&]() {
+        while (true) {
+            // print robot location to the brain screen
+            pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
+            pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
+            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+            pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
+            pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw positio
+            // delay to save resources
+            pros::delay(20);
+        }
+    });
 }
+
 /**
  * Runs while the robot is in the disabled state of Field Management System or
  * the VEX Competition Switch, following either autonomous or opcontrol. When
@@ -150,7 +157,7 @@ void Right_Quad() {
     // Im so smart trust I realised I can just use one auton for both opposing quadrants and It will still work the same :D
     chassis.setPose(0, 65, 180);
     chassis.follow(Right_Path_1_txt, 15, 2000);
-    Claw.move_absolute(565, 127);
+    Claw.move_absolute(570, 127);
     chassis.follow(Right_Path_2_txt, 15, 2000);
     Pickup.move_voltage(12000);
     chassis.follow(Right_Path_3_txt, 15, 2000);
@@ -160,7 +167,7 @@ void Left_Quad() {
     // Just Mirrored it because Im lazy
     chassis.setPose(0, 65, 0);
     chassis.follow(Left_Path_1_txt, 15, 2000);
-    Claw.move_absolute(565, 127);
+    Claw.move_absolute(570, 127);
     chassis.follow(Left_Path_2_txt, 15, 2000);
     Pickup.move_voltage(12000);
     chassis.follow(Left_Path_3_txt, 15, 2000);
@@ -251,7 +258,7 @@ void opcontrol() {
             Pickup.move_velocity(0);
         }
         if (Cascade.get_position() > 75) {
-            Claw.move_absolute(565, 127);
+            Claw.move_absolute(570, 127);
         }
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
             IntakeFront.move_voltage(-12000);
@@ -262,6 +269,11 @@ void opcontrol() {
             IntakeFront.move_voltage(12000);
             IntakeBottom.move_voltage(12000);
             Pickup.move_voltage(-12000);
+            Claw.move_absolute(0, 127);
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
+            IntakeFront.move_voltage(-12000);
+            IntakeBottom.move_voltage(-12000);
+            Pickup.move_voltage(12000);
             Claw.move_absolute(0, 127);
         } else {
             IntakeFront.brake();
@@ -275,6 +287,9 @@ void opcontrol() {
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
                 Pickup.move_voltage(-12000);
             }
+        }
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+            Claw.move_absolute(700, 127);
         }
 
         // delay to save resources
