@@ -159,6 +159,8 @@ void Right_Quad() {
     Claw.move_absolute(565, 127);
     chassis.follow(Right_Path_2_txt, 15, 2000);
     Pickup.move_voltage(12000);
+    chassis.follow(Right_Path_3_txt, 15, 2000);
+    chassis.follow(Right_Path_4_txt, 15, 2000);
 }
 void Left_Quad() {
     // Just Mirrored it because Im lazy
