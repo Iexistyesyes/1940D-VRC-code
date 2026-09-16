@@ -1,298 +1,271 @@
-#include "main.h"
-#include "lemlib/api.hpp"
-//merged auton test branch
-/**
- * A callback function for LLEMU's center button.
- *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
- */
-int autonSelected = 0;
-// INITIALISATION DO NOT TOUCH
-pros::MotorGroup left_motors({2, 3}, pros::MotorGearset::blue); // left motors on ports 2, 3
-pros::MotorGroup right_motors({4, 5}, pros::MotorGearset::blue); // right motors on ports 9, 10
-lemlib::Drivetrain drivetrain(&left_motors, // left motor group
-                              &right_motors, // right motor group
-                              10, // 10 inch track width
-                              lemlib::Omniwheel::NEW_325, //new 3.25" omnisx
-                              360, // drivetrain rpm is 360
-                              2 // horizontal drift is 2 (for now)
-);
-pros::Imu imu(6);
-pros::Rotation vertical_encoder(7);
-// pros::Rotation horizontal_encoder(14);
-// lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, 2.5); // horizontal tracking wheel, 2.
-lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_2, -2.5);
-lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
-                            nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
-                            // &horizontal_tracking_wheel, // horizontal tracking wheel 1
-                            nullptr,
-                            nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
-                            &imu // inertial sensor
-);
-// lateral PID controller
-lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
-                                              0, // integral gain (kI)
-                                              3, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in inches
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
-);
+    #include "main.h"
+    #include "lemlib/api.hpp"
+    //merged auton test branch
+    /**
+     * A callback function for LLEMU's center button.
+     *
+     * When this callback is fired, it will toggle line 2 of the LCD text between
+     * "I was pressed!" and nothing.
+     */
+    int autonSelected = 0;
+    // INITIALISATION DO NOT TOUCH
+    pros::MotorGroup left_motors({-2, -3}, pros::MotorGearset::blue); // left motors on ports 2, 3
+    pros::MotorGroup right_motors({4, 5}, pros::MotorGearset::blue); // right motors on ports 9, 10
+    lemlib::Drivetrain drivetrain(&left_motors, // left motor group
+                                &right_motors, // right motor group
+                                10, // 10 inch track width
+                                lemlib::Omniwheel::NEW_325, //new 3.25" omnisx
+                                360, // drivetrain rpm is 360
+                                2 // horizontal drift is 2 (for now)
+    );
+    pros::Imu imu(6);
+    pros::Rotation vertical_encoder(7);
+    // pros::Rotation horizontal_encoder(14);
+    // lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, 2.5); // horizontal tracking wheel, 2.
+    lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_2, 0);
+    lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
+                                nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
+                                // &horizontal_tracking_wheel, // horizontal tracking wheel 1
+                                nullptr,
+                                nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
+                                &imu // inertial sensor
+    );
+    // lateral PID controller
+    lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
+                                                0, // integral gain (kI)
+                                                3, // derivative gain (kD)
+                                                3, // anti windup
+                                                1, // small error range, in inches
+                                                100, // small error range timeout, in milliseconds
+                                                3, // large error range, in inches
+                                                500, // large error range timeout, in milliseconds
+                                                20 // maximum acceleration (slew)
+    );
 
-// angular PID controller
-lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
-                                              0, // integral gain (kI)
-                                              10, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in degrees
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in degrees
-                                              500, // large error range timeout, in milliseconds
-                                              0 // maximum acceleration (slew)
-);
-// create the chassis
-lemlib::Chassis chassis(drivetrain, // drivetrain settings
-                        lateral_controller, // lateral PID settings
-                        angular_controller, // angular PID settings
-                        sensors // odometry sensors
-);
-pros::Controller controller(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup Cascade({1, -10}, pros::MotorGearset::green); // cascade motors on ports 1, 8
-pros::Motor Claw({19}, pros::MotorGearset::green);
-pros::Motor Pickup(20);
-pros::Motor IntakeFront(18);
-pros::Motor IntakeBottom(17);
-int ButtonYes1 = 1;
-int ButtonYes2 = 1;
-/**
- * Runs initialization code. This occurs as soon as the program is started.
- *
- * All other competition modes are blocked by initialize; it is recommended
- * to keep execution time for this mode under a few seconds.
- */
-void autonSelector() {
-    while (true) {
-        int buttons = pros::lcd::read_buttons();
-        buttons = buttons - 216;
-        if (buttons & LCD_BTN_LEFT) {
-            autonSelected--;
-
-            if (autonSelected < 0) {
-                autonSelected = 2;
-            }
-
-            pros::delay(250);
-        }
-
-        if (buttons & LCD_BTN_RIGHT) {
-            autonSelected++;
-
-            if (autonSelected > 2) {
-                autonSelected = 0;
-            }
-
-            pros::delay(250);
-        }
+    // angular PID controller
+    lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
+                                                0, // integral gain (kI)
+                                                10, // derivative gain (kD)
+                                                3, // anti windup
+                                                1, // small error range, in degrees
+                                                100, // small error range timeout, in milliseconds
+                                                3, // large error range, in degrees
+                                                500, // large error range timeout, in milliseconds
+                                                0 // maximum acceleration (slew)
+    );
+    // create the chassis
+    lemlib::Chassis chassis(drivetrain, // drivetrain settings
+                            lateral_controller, // lateral PID settings
+                            angular_controller, // angular PID settings
+                            sensors // odometry sensors
+    );
+    pros::Controller controller(pros::E_CONTROLLER_MASTER);
+    pros::MotorGroup Cascade({1, -10}, pros::MotorGearset::green); // cascade motors on ports 1, 8
+    pros::Motor Claw({19}, pros::MotorGearset::green);
+    pros::Motor Pickup(20);
+    pros::Motor IntakeFront(18);
+    pros::Motor IntakeBottom(17);
+    int ButtonYes1 = 1;
+    int ButtonYes2 = 1;
+    /**
+     * Runs initialization code. This occurs as soon as the program is started.
+     *
+     * All other competition modes are blocked by initialize; it is recommended
+     * to keep execution time for this mode under a few seconds.
+     */
 
 
-        switch (autonSelected) {
-
-            case 0:
-                pros::lcd::print(5, "Auton: Right Quad");
-                break;
-
-            case 1:
-                pros::lcd::print(5, "Auton: Left Quad");
-                break;
-
-            case 2:
-                pros::lcd::print(5, "Auton: Skills");
-                break;
-
-        }
-
-        pros::delay(20);
-    }
-}
 void initialize() {
     pros::lcd::initialize(); // initialize brain screen
-    chassis.calibrate(); // calibrate sensors
-    pros::Task autonTask(autonSelector);
-    // print position to brain screen
+    
+    // 1. START THE SCREEN TASK FIRST!
+    // This ensures the screen and buttons work instantly, without waiting for the IMU.
     pros::Task screen_task([&]() {
+        // Track whether the buttons were pressed on the previous loop
+        bool last_left = false;
+        bool last_right = false;
+
         while (true) {
-            // print robot location to the brain screen
+            // Print robot location and mechanisms
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
             pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
-            pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw positio
-            // delay to save resources
+            pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
+            printf("X: %f\n", chassis.getPose().x); // x
+            printf("Y: %f\n", chassis.getPose().y); // y
+            printf("Theta: %f\n", chassis.getPose().theta); // heading
+
+            // Standard delay
             pros::delay(20);
         }
     });
+
+    // 2. RUN CALIBRATION AFTER THE TASK STARTS
+    // The robot will calibrate in the background while your UI is fully functional.
+    chassis.calibrate(); 
 }
 
-/**
- * Runs while the robot is in the disabled state of Field Management System or
- * the VEX Competition Switch, following either autonomous or opcontrol. When
- * the robot is enabled, this task will exit.
- */
-ASSET(Left_Path_1_txt);
-ASSET(Left_Path_2_txt);
-ASSET(Left_Path_3_txt);
-ASSET(Left_Path_4_txt);
-ASSET(Right_Path_1_txt);
-ASSET(Right_Path_2_txt);
-ASSET(Right_Path_3_txt);
-ASSET(Right_Path_4_txt);
-void disabled() {
-    Claw.move_absolute(0,127);
+    /**
+     * Runs while the robot is in the disabled state of Field Management System or
+     * the VEX Competition Switch, following either autonomous or opcontrol. When
+     * the robot is enabled, this task will exit.
+     */
+    ASSET(Left_Path_1_txt);
+    ASSET(Left_Path_2_txt);
+    ASSET(Left_Path_3_txt);
+    ASSET(Left_Path_4_txt);
+    ASSET(Right_Path_1_txt);
+    ASSET(Right_Path_2_txt);
+    ASSET(Right_Path_3_txt);
+    ASSET(Right_Path_4_txt);
+    void disabled() {
+        Claw.move_absolute(0,127);
 
-}
-void Right_Quad() {
-    // Im so smart trust I realised I can just use one auton for both opposing quadrants and It will still work the same :D
-    chassis.setPose(0, 65, 180);
-    chassis.follow(Right_Path_1_txt, 15, 2000);
-    Claw.move_absolute(570, 127);
-    chassis.follow(Right_Path_2_txt, 15, 2000);
-    Pickup.move_voltage(12000);
-    chassis.follow(Right_Path_3_txt, 15, 2000);
-    chassis.follow(Right_Path_4_txt, 15, 2000);
-}
-void Left_Quad() {
-    // Just Mirrored it because Im lazy
-    chassis.setPose(0, 65, 0);
-    chassis.follow(Left_Path_1_txt, 15, 2000);
-    Claw.move_absolute(570, 127);
-    chassis.follow(Left_Path_2_txt, 15, 2000);
-    Pickup.move_voltage(12000);
-    chassis.follow(Left_Path_3_txt, 15, 2000);
-    chassis.follow(Left_Path_4_txt, 15, 2000);
-}
-void Skills() {
-    // Need to finish LOL
-    // Might do on Wednesday
-}
-
-
-/**
- * Runs after initialize(), and before autonomous when connected to the Field
- * Management System or the VEX Competition Switch. This is intended for
- * competition-specific initialization routines, such as an autonomous selector
- * on the LCD.
- *
- * This task will exit when the robot is enabled and autonomous or opcontrol
- * starts.
- */
-void competition_initialize() {}
-
-/**
- * Runs the user autonomous code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the autonomous
- * mode. Alternatively, this function may be called in initialize or opcontrol
- * for non-competition testing purposes.
- *
- * If the robot is disabled or communications is lost, the autonomous task
- * will be stopped. Re-enabling the robot will restart the task, not re-start it
- * from where it left off.
- */
-void autonomous() {
-    switch (autonSelected) {
-        case 0:
-            Right_Quad();
-            break;
-        case 1:
-            Left_Quad();
-            break;
-        case 2:
-            Skills();
-            break;
     }
-}
+
+    void autonTest() {
+        chassis.setPose(0, 0, 0);
+        chassis.moveToPoint(0, 24, 3000);
+        chassis.waitUntilDone();
+        printf("X: %f\n", chassis.getPose().x); // x
+        printf("Y: %f\n", chassis.getPose().y); // y    
+        printf("Theta: %f\n", chassis.getPose().theta); // heading
+    }
+
+    void Right_Quad() {
+        printf("Right Quad started\n");
+        // Im so smart trust I realised I can just use one auton for both opposing quadrants and It will still work the same :D
+        chassis.setPose(0, 65, 180);
+        chassis.follow(Right_Path_1_txt, 15, 2000);
+        chassis.waitUntilDone();
+        Claw.move_absolute(570, 127);
+        chassis.waitUntilDone();
+        chassis.follow(Right_Path_2_txt, 15, 2000);
+        chassis.waitUntilDone();
+        Pickup.move_voltage(12000);
+        chassis.waitUntilDone();
+        chassis.follow(Right_Path_3_txt, 15, 2000);
+        chassis.follow(Right_Path_4_txt, 15, 2000);
+    }
+    // void Left_Quad() {
+    //     // Just Mirrored it because Im lazy
+    //     chassis.setPose(0, 65, 0);
+    //     chassis.follow(Left_Path_1_txt, 15, 2000);
+    //     Claw.move_absolute(570, 127);
+    //     chassis.follow(Left_Path_2_txt, 15, 2000);
+    //     Pickup.move_voltage(12000);
+    //     chassis.follow(Left_Path_3_txt, 15, 2000);
+    //     chassis.follow(Left_Path_4_txt, 15, 2000);
+    // }
+    // void Skills() {
+    //     // Need to finish LOL
+    //     // Might do on Wednesday
+    // }
 
 
-/**
- * Runs the operator control code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the operator
- * control mode.
- *
- * If no competition control is connected, this function will run immediately
- * following initialize().
- *
- * If the robot is disabled or communications is lost, the
- * operator control task will be stopped. Re-enabling the robot will restart the
- * task, not resume it from where it left off.
- */
-void opcontrol() {
-    Claw.set_zero_position(0);
-    Claw.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-    Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
-    // loop forever
-    while (true) {
-        // get left y and right x positions
-        int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-        // move the robot
-        // prioritize steering slightly
-        chassis.arcade(-leftX, -leftY, false, 0.75);
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-            Cascade.move_voltage(12000);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-            Cascade.move_voltage(-12000);
-        } 
-        else {
-            Cascade.move(0);
-        }
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-            Pickup.move_velocity(120);
-        }  else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-            Pickup.move_velocity(-120);
-        } 
-        else {
-            Pickup.move_velocity(0);
-        }
-        if (Cascade.get_position() > 75) {
-            Claw.move_absolute(570, 127);
-        }
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
-            IntakeFront.move_voltage(-12000);
-            IntakeBottom.move_voltage(12000);
-            Pickup.move_voltage(-12000);
-            Claw.move_absolute(0, 127);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
-            IntakeFront.move_voltage(12000);
-            IntakeBottom.move_voltage(12000);
-            Pickup.move_voltage(-12000);
-            Claw.move_absolute(0, 127);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
-            IntakeFront.move_voltage(-12000);
-            IntakeBottom.move_voltage(-12000);
-            Pickup.move_voltage(12000);
-            Claw.move_absolute(0, 127);
-        } else {
-            IntakeFront.brake();
-            IntakeBottom.brake();
-            Pickup.brake();
-        }
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
-            Pickup.move_voltage(12000);
-        } 
-        else { 
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-                Pickup.move_voltage(-12000);
+    /**
+     * Runs after initialize(), and before autonomous when connected to the Field
+     * Management System or the VEX Competition Switch. This is intended for
+     * competition-specific initialization routines, such as an autonomous selector
+     * on the LCD.
+     *
+     * This task will exit when the robot is enabled and autonomous or opcontrol
+     * starts.
+     */
+    void competition_initialize() {}
+
+    /**
+     * Runs the user autonomous code. This function will be started in its own task
+     * with the default priority and stack size whenever the robot is enabled via
+     * the Field Management System or the VEX Competition Switch in the autonomous
+     * mode. Alternatively, this function may be called in initialize or opcontrol
+     * for non-competition testing purposes.
+     *
+     * If the robot is disabled or communications is lost, the autonomous task
+     * will be stopped. Re-enabling the robot will restart the task, not re-start it
+     * from where it left off.
+     */
+    void autonomous() {
+        printf("Autonomous started\n");
+        Right_Quad();
+        // autonTest();
+    }
+
+
+    /**
+     * Runs the operator control code. This function will be started in its own task
+     * with the default priority and stack size whenever the robot is enabled via
+     * the Field Management System or the VEX Competition Switch in the operator
+     * control mode.
+     *
+     * If no competition control is connected, this function will run immediately
+     * following initialize().
+     *
+     * If the robot is disabled or communications is lost, the
+     * operator control task will be stopped. Re-enabling the robot will restart the
+     * task, not resume it from where it left off.
+     */
+    void opcontrol() {
+        Claw.set_zero_position(0);
+        Claw.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+        Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
+        // loop forever
+        while (true) {
+            // get left y and right x positions
+            int RightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+            int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+            // move the robot
+            // prioritize steering slightly
+            chassis.arcade(leftY, RightX, false, 0.75);
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+                Cascade.move_voltage(12000);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+                Cascade.move_voltage(-12000);
+            } 
+            else {
+                Cascade.move(0);
             }
-        }
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
-            Claw.move_absolute(700, 127);
-        }
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+                Pickup.move_velocity(120);
+            }  else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+                Pickup.move_velocity(-120);
+            } 
+            else {
+                Pickup.move_velocity(0);
+            }
+            if (Cascade.get_position() > 75) {
+                Claw.move_absolute(570, 127);
+            }
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
+                IntakeFront.move_voltage(-12000);
+                IntakeBottom.move_voltage(12000);
+                Pickup.move_voltage(-12000);
+                Claw.move_absolute(0, 127);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+                IntakeFront.move_voltage(12000);
+                IntakeBottom.move_voltage(12000);
+                Pickup.move_voltage(-12000);
+                Claw.move_absolute(0, 127);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
+                IntakeFront.move_voltage(-12000);
+                IntakeBottom.move_voltage(-12000);
+                Pickup.move_voltage(12000);
+                Claw.move_absolute(0, 127);
+            } else {
+                IntakeFront.brake();
+                IntakeBottom.brake();
+                Pickup.brake();
+            }
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+                Pickup.move_voltage(12000);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+                    Pickup.move_voltage(-12000);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+                Claw.move_absolute(800, 127);
+            }
 
-        // delay to save resources
-        pros::delay(25);
+            // delay to save resources
+            pros::delay(25);
+        }
     }
-}
