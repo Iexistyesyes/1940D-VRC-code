@@ -77,44 +77,25 @@ void autonSelector() {
     while (true) {
         int buttons = pros::lcd::read_buttons();
 
-        if (buttons & LCD_BTN_LEFT) {
-            autonSelected--;
+        pros::lcd::print(6, "Buttons: %d", buttons);
 
-            if (autonSelected < 0) {
-                autonSelected = 2;
-            }
-
-            pros::delay(250);
+        if (buttons == LCD_BTN_LEFT) {
+            pros::lcd::print(7, "LEFT!");
+        }
+        else if (buttons == LCD_BTN_RIGHT) {
+            pros::lcd::print(7, "RIGHT!");
+        }
+        else if (buttons == LCD_BTN_CENTER) {
+            pros::lcd::print(7, "CENTER!");
+        }
+        else if (buttons == 0) {
+            pros::lcd::print(7, "NONE");
+        }
+        else {
+            pros::lcd::print(7, "UNKNOWN");
         }
 
-        if (buttons & LCD_BTN_RIGHT) {
-            autonSelected++;
-
-            if (autonSelected > 2) {
-                autonSelected = 0;
-            }
-
-            pros::delay(250);
-        }
-
-
-        switch (autonSelected) {
-
-            case 0:
-                pros::lcd::print(5, "Auton: Right Quad");
-                break;
-
-            case 1:
-                pros::lcd::print(5, "Auton: Left Quad");
-                break;
-
-            case 2:
-                pros::lcd::print(5, "Auton: Skills");
-                break;
-
-        }
-
-        pros::delay(20);
+        pros::delay(50);
     }
 }
 void initialize() {
@@ -130,6 +111,8 @@ void initialize() {
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
             pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
             pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
+            int buttons = pros::lcd::read_buttons();
+            pros::lcd::print(6, "Buttons: %d", buttons);
             // delay to save resources
             pros::delay(20);
         }
