@@ -135,21 +135,10 @@ void initialize() {
 
     void Right_Quad() {
         printf("Right Quad started\n");
-        // Im so smart trust I realised I can just use one auton for both opposing quadrants and It will still work the same :D
-        chassis.setPose(0, 65, 180);
-        chassis.follow(Right_Path_1_txt, 15, 2000);
-        chassis.waitUntilDone();
-        Claw.move_absolute(570, 127);
-        chassis.waitUntilDone();
-        chassis.follow(Right_Path_2_txt, 15, 2000);
-        chassis.waitUntilDone();
-        Pickup.move_voltage(12000);
-        chassis.waitUntilDone();
-        chassis.follow(Right_Path_3_txt, 15, 2000);
-        chassis.follow(Right_Path_4_txt, 15, 2000);
+
     }
     // void Left_Quad() {
-    //     // Just Mirrored it because Im lazy
+    //     printf("Left Quad started\n");
     //     chassis.setPose(0, 65, 0);
     //     chassis.follow(Left_Path_1_txt, 15, 2000);
     //     Claw.move_absolute(570, 127);
