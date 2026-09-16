@@ -98,27 +98,37 @@ void autonSelector() {
         pros::delay(50);
     }
 }
+// void initialize() {
+//     pros::lcd::initialize(); // initialize brain screen
+//     chassis.calibrate(); // calibrate sensors
+//     pros::Task autonTask(autonSelector);
+//     // print position to brain screen
+//     pros::Task screen_task([&]() {
+//         while (true) {
+//             // print robot location to the brain screen
+//             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
+//             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
+//             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+//             pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
+//             pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
+//             int buttons = pros::lcd::read_buttons();
+//             pros::lcd::print(6, "Buttons: %d", buttons);
+//             // delay to save resources
+//             pros::delay(20);
+//         }
+//     });
+// }
 void initialize() {
-    pros::lcd::initialize(); // initialize brain screen
-    chassis.calibrate(); // calibrate sensors
-    pros::Task autonTask(autonSelector);
-    // print position to brain screen
-    pros::Task screen_task([&]() {
-        while (true) {
-            // print robot location to the brain screen
-            pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
-            pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-            pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
-            pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
-            int buttons = pros::lcd::read_buttons();
-            pros::lcd::print(6, "Buttons: %d", buttons);
-            // delay to save resources
-            pros::delay(20);
-        }
-    });
-}
+    pros::lcd::initialize();
 
+    while (true) {
+        int buttons = pros::lcd::read_buttons();
+
+        pros::lcd::print(0, "Buttons: %d", buttons);
+
+        pros::delay(50);
+    }
+}
 /**
  * Runs while the robot is in the disabled state of Field Management System or
  * the VEX Competition Switch, following either autonomous or opcontrol. When
