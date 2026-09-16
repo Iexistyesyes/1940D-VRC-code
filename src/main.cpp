@@ -20,12 +20,13 @@ lemlib::Drivetrain drivetrain(&left_motors, // left motor group
 );
 pros::Imu imu(6);
 pros::Rotation vertical_encoder(7);
-pros::Rotation horizontal_encoder(14);
-lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, 2.5); // horizontal tracking wheel, 2.
+// pros::Rotation horizontal_encoder(14);
+// lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, 2.5); // horizontal tracking wheel, 2.
 lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_2, -2.5);
 lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
                             nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
-                            &horizontal_tracking_wheel, // horizontal tracking wheel 1
+                            // &horizontal_tracking_wheel, // horizontal tracking wheel 1
+                            nullptr,
                             nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
                             &imu // inertial sensor
 );
@@ -73,10 +74,10 @@ int ButtonYes2 = 1;
  * to keep execution time for this mode under a few seconds.
  */
 void autonSelector() {
-
     while (true) {
+        int buttons = pros::lcd::read_buttons();
 
-        if (pros::lcd::read_buttons() == LCD_BTN_LEFT) {
+        if (buttons & LCD_BTN_LEFT) {
             autonSelected--;
 
             if (autonSelected < 0) {
@@ -86,28 +87,29 @@ void autonSelector() {
             pros::delay(250);
         }
 
-        if (pros::lcd::read_buttons() == LCD_BTN_RIGHT) {
+        if (buttons & LCD_BTN_RIGHT) {
             autonSelected++;
 
-            if (autonSelected > 3) {
+            if (autonSelected > 2) {
                 autonSelected = 0;
             }
 
             pros::delay(250);
         }
 
+
         switch (autonSelected) {
 
             case 0:
-                pros::lcd::print(5, "Auton: Right Quad");
+                pros::lcd::print(6, "Auton: Right Quad");
                 break;
 
             case 1:
-                pros::lcd::print(5, "Auton: Left Quad");
+                pros::lcd::print(6, "Auton: Left Quad");
                 break;
 
             case 2:
-                pros::lcd::print(5, "Auton: Skills");
+                pros::lcd::print(6, "Auton: Skills");
                 break;
 
         }
@@ -254,15 +256,15 @@ void opcontrol() {
         else {
             Pickup.move_velocity(0);
         }
-        if (Cascade.get_position() > 50) {
+        if (Cascade.get_position() > 75) {
             Claw.move_absolute(565, 127);
         }
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
             IntakeFront.move_voltage(-12000);
             IntakeBottom.move_voltage(12000);
             Pickup.move_voltage(-12000);
             Claw.move_absolute(0, 127);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
             IntakeFront.move_voltage(12000);
             IntakeBottom.move_voltage(12000);
             Pickup.move_voltage(-12000);
@@ -274,6 +276,11 @@ void opcontrol() {
         }
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
             Pickup.move_voltage(12000);
+        } 
+        else { 
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+                Pickup.move_voltage(-12000);
+            }
         }
 
         // delay to save resources
