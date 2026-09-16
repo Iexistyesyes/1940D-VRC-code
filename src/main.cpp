@@ -101,15 +101,15 @@ void autonSelector() {
         switch (autonSelected) {
 
             case 0:
-                pros::lcd::print(6, "Auton: Right Quad");
+                pros::lcd::print(5, "Auton: Right Quad");
                 break;
 
             case 1:
-                pros::lcd::print(6, "Auton: Left Quad");
+                pros::lcd::print(5, "Auton: Left Quad");
                 break;
 
             case 2:
-                pros::lcd::print(6, "Auton: Skills");
+                pros::lcd::print(5, "Auton: Skills");
                 break;
 
         }
@@ -130,7 +130,6 @@ void initialize() {
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
             pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
             pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
-            pros::lcd::print(5, "Auton: Red Left");
             // delay to save resources
             pros::delay(20);
         }
