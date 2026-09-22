@@ -31,19 +31,19 @@
                                 &imu // inertial sensor
     );
     // lateral PID controller
-    lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
+    lemlib::ControllerSettings lateral_controller(24.7, // proportional gain (kP)
                                                 0, // integral gain (kI)
-                                                3, // derivative gain (kD)
-                                                3, // anti windup
-                                                1, // small error range, in inches
-                                                100, // small error range timeout, in milliseconds
-                                                3, // large error range, in inches
-                                                500, // large error range timeout, in milliseconds
-                                                20 // maximum acceleration (slew)
+                                                0, // derivative gain (kD)
+                                                0, // anti windup
+                                                0, // small error range, in inches
+                                                0, // small error range timeout, in milliseconds
+                                                0, // large error range, in inches
+                                                0, // large error range timeout, in milliseconds
+                                                5 // maximum acceleration (slew)
     );
 
     // angular PID controller
-    lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
+    lemlib::ControllerSettings angular_controller(3, // proportional gain (kP)
                                                 0, // integral gain (kI)
                                                 10, // derivative gain (kD)
                                                 3, // anti windup
@@ -51,7 +51,7 @@
                                                 100, // small error range timeout, in milliseconds
                                                 3, // large error range, in degrees
                                                 500, // large error range timeout, in milliseconds
-                                                0 // maximum acceleration (slew)
+                                                5 // maximum acceleration (slew)
     );
     // create the chassis
     lemlib::Chassis chassis(drivetrain, // drivetrain settings
@@ -121,20 +121,28 @@ void initialize() {
 
     void autonTest() {
         chassis.setPose(0, 0, 0);
-        chassis.moveToPoint(0, 24, 3000);
+        chassis.moveToPoint(0, 24, 3000, {.minSpeed = 127});
         chassis.waitUntilDone();
         printf("X: %f\n", chassis.getPose().x); // x
         printf("Y: %f\n", chassis.getPose().y); // y    
         printf("Theta: %f\n", chassis.getPose().theta); // heading
     }
-
+    void pidTest() {
+    // set position to x:0, y:0, heading:0
+    chassis.setPose(0, 0, 0);
+    // turn to face heading 90 with a very long timeout
+    chassis.moveToPose(0, 24, 0 , 3000);
+    chassis.waitUntilDone();
+    printf("X: %f\n", chassis.getPose().x); // x
+    printf("Y: %f\n", chassis.getPose().y); // y
+    }
     void Right_Quad() {
         printf("Right Quad started\n");
         chassis.setPose(0, 63, 180);
         chassis.moveToPoint(0, 47, 750);
         chassis.waitUntilDone();
         Pickup.move(-12000);
-        chassis.turnToHeading(275, 750);
+        chassis.turnToHeading(275, 1000);
         chassis.waitUntilDone();
         Pickup.brake();
         printf("X: %f\n", chassis.getPose().x); // x
@@ -142,23 +150,23 @@ void initialize() {
         printf("Theta: %f\n", chassis.getPose().theta); // heading
         Claw.move_absolute(700, 127);
         chassis.waitUntilDone();
-        chassis.moveToPoint(16.3, 46.5, 750, {.forwards = false});
+        chassis.moveToPoint(16, 47, 750, {.forwards = false});
         chassis.waitUntilDone();
-        Pickup.move_voltage(12000);
+        Pickup.move_voltage(6000);
         pros::delay(1500);
         Pickup.brake();
         Claw.move_absolute(0,127);
-        chassis.moveToPoint(0, 47, 500);
+        chassis.moveToPoint(0, 47, 750);
         chassis.waitUntilDone();
         chassis.turnToHeading(0, 500);
         chassis.waitUntilDone();
-        chassis.moveToPoint(0, 63, 750);
+        chassis.moveToPoint(0, 70, 750, {.minSpeed = 127});
         chassis.waitUntilDone();
-        chassis.moveToPoint(0, 47, 750, {.forwards = false});
+        chassis.moveToPoint(0, 47, 750, {.forwards = false, .minSpeed = 100});
         chassis.waitUntilDone();
-        chassis.moveToPoint(0, 70, 750);
+        chassis.moveToPoint(0, 70, 1300, {.minSpeed = 127});
         chassis.waitUntilDone();
-        chassis.moveToPoint(0, 0 , 2000);
+        chassis.moveToPoint(0, 0 , 750, {.minSpeed = 127});
         chassis.waitUntilDone();
     }
     void Left_Quad() {
@@ -197,6 +205,7 @@ void initialize() {
     void Skills() {
         // Need to finish LOL
         // Might do on Wednesday
+        Claw.move_absolute(1100, 127);
     }
 
 
@@ -226,6 +235,7 @@ void initialize() {
         printf("Autonomous started\n");
         Right_Quad();
         // autonTest();
+        // pidTest();
     }
 
 
@@ -243,7 +253,8 @@ void initialize() {
      * task, not resume it from where it left off.
      */
     void opcontrol() {
-        Claw.set_zero_position(0);
+        // Claw.set_zero_position(0);
+        Cascade.set_zero_position(0);
         Claw.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
         Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
         int CascadeUp = 0;
@@ -252,6 +263,7 @@ void initialize() {
             // get left y and right x positions
             int RightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
             int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+            printf("Cascade: %f\n", Cascade.get_position()); // x
             // move the robot
             // prioritize steering slightly
             chassis.arcade(leftY, RightX, false, 0.75);
@@ -259,25 +271,15 @@ void initialize() {
                 Cascade.move_voltage(12000);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
                 Cascade.move_voltage(-12000);
-            } 
-            else {
+            } else {
                 Cascade.move(0);
             }
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-                Pickup.move_velocity(120);
-            }  else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-                Pickup.move_velocity(-120);
-            } 
-            else {
-                Pickup.move_velocity(0);
-            }
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && CascadeUp != 1) {
                 IntakeFront.move_voltage(-12000);
                 IntakeBottom.move_voltage(12000);
                 Pickup.move_voltage(-12000);
                 Claw.move_absolute(0, 127);
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
-                IntakeFront.move_voltage(12000);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B) && CascadeUp != 1) {
                 IntakeBottom.move_voltage(12000);
                 Pickup.move_voltage(-12000);
                 Claw.move_absolute(0, 127);
@@ -286,37 +288,27 @@ void initialize() {
                 IntakeBottom.move_voltage(-12000);
                 Pickup.move_voltage(12000);
                 Claw.move_absolute(0, 127);
-            } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+            } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
                 if (clawState == 0) {
-                    Claw.move_absolute(900, 127);
+                    Claw.move_absolute(900, 200);
                     clawState = 1;
                 } else {
-                    Claw.move_absolute(680,127);
+                    Claw.move_absolute(680,200);
                     clawState = 0;
-                }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
-                if (clawState2 == 0) {
-                    Claw.move_absolute(580[-], 127);
-                    clawState2 = 1;
-                } else {
-                    Claw.move_absolute(680,127);
-                    clawState2 = 0;
-                }
-            } else {
+                }} else {
                 IntakeFront.brake();
                 IntakeBottom.brake();
                 Pickup.brake();
             }
-            if (Cascade.get_position()>75 && CascadeUp == 0)  {
+            if (Cascade.get_position()> 400 && CascadeUp == 0)  {
                 Claw.move_absolute(680, 127);
                 CascadeUp = 1;
-            }
-            if (Cascade.get_position() < 70 ) {
+            } else if (Cascade.get_position() < 400 ) {
                 CascadeUp = 0;
             }
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
                 Pickup.move_voltage(12000);
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
                     Pickup.move_voltage(-12000);
             }
 
