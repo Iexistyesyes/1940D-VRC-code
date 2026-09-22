@@ -138,27 +138,15 @@ void initialize() {
     }
     void Right_Quad() {
         printf("Right Quad started\n");
-        chassis.setPose(0, 63, 180);
-        chassis.moveToPoint(0, 47, 750);
-        chassis.waitUntilDone();
+        chassis.setPose(9.1, 61.8, 135);
         Pickup.move(-12000);
-        chassis.turnToHeading(275, 1000);
-        chassis.waitUntilDone();
-        Pickup.brake();
-        printf("X: %f\n", chassis.getPose().x); // x
-        printf("Y: %f\n", chassis.getPose().y); // y    
-        printf("Theta: %f\n", chassis.getPose().theta); // heading
         Claw.move_absolute(700, 127);
-        chassis.waitUntilDone();
-        chassis.moveToPoint(16, 47, 750, {.forwards = false});
+        chassis.moveToPoint(17.3, 54, 750);
         chassis.waitUntilDone();
         Pickup.move_voltage(6000);
         pros::delay(1500);
         Pickup.brake();
-        Claw.move_absolute(0,127);
-        chassis.moveToPoint(0, 47, 750);
-        chassis.waitUntilDone();
-        chassis.turnToHeading(0, 500);
+        chassis.moveToPose(0, 53, 180, 750);
         chassis.waitUntilDone();
         chassis.moveToPoint(0, 70, 750, {.minSpeed = 127});
         chassis.waitUntilDone();
