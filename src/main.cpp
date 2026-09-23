@@ -116,7 +116,7 @@ void initialize() {
 
     void disabled() {
         Claw.move_absolute(0,127);
-
+        Cascade.move_absolute(170,127);
     }
 
     void autonTest() {
@@ -139,61 +139,68 @@ void initialize() {
     void Right_Quad() {
         printf("Right Quad started\n");
         chassis.setPose(9.1, 61.8, 135);
-        Pickup.move(-12000);
-        Claw.move_absolute(700, 127);
-        chassis.moveToPoint(17.3, 54, 750);
+        chassis.turnToHeading(320, 750);
         chassis.waitUntilDone();
+        Pickup.move(-12000);
+        Claw.move_absolute(680, 127);
+        chassis.moveToPoint(19.5, 52, 750, {.forwards = false});
+        chassis.waitUntilDone();
+        Pickup.brake();
+        pros::delay(300);
+        Pickup.move_voltage(6000);
+        pros::delay(400);
+        Pickup.brake();
+        chassis.moveToPose(0, 53, 180, 1000);
+        chassis.waitUntilDone();
+        Claw.move_absolute(0,127);
+        chassis.moveToPoint(0, 70, 1000, {.minSpeed = 100});
+        chassis.waitUntilDone();
+        chassis.moveToPoint(0, 55, 1000, {.forwards = false, .maxSpeed = 127});
+        chassis.waitUntilDone();
+        chassis.moveToPoint(0, 70, 1000, {.maxSpeed = 70});
+        chassis.waitUntilDone();
+        chassis.moveToPoint(5, 42, 1500, {.forwards = false, .maxSpeed = 127});
+        chassis.waitUntilDone();
+        chassis.turnToHeading(320, 2000);
+        chassis.waitUntilDone();
+        Claw.move_absolute(680, 127);
+        chassis.moveToPoint(18.5, 28, 2000, {.forwards = false});
+        chassis.waitUntilDone();
+        Pickup.move_voltage(-12000);
+        Claw.move_absolute(480, 127);
+        pros::delay(500);
+    }
+    void Left_Quad() {
+       printf("Left Quad started\n");
+        chassis.setPose(61.8, 9.1, -135);
+        chassis.turnToHeading(-320, 750);
+        chassis.waitUntilDone();
+        Pickup.move(-12000);
+        Claw.move_absolute(-680, 127);
+        chassis.moveToPoint(52, 19.5, 750, {.forwards = false});
+        chassis.waitUntilDone();
+        Pickup.brake();
+        pros::delay(500);
         Pickup.move_voltage(6000);
         pros::delay(1500);
         Pickup.brake();
-        chassis.moveToPose(0, 53, 180, 750);
+        chassis.moveToPose(53, 0, 180, 1000);
         chassis.waitUntilDone();
-        chassis.moveToPoint(0, 70, 750, {.minSpeed = 127});
-        chassis.waitUntilDone();
-        chassis.moveToPoint(0, 47, 750, {.forwards = false, .minSpeed = 100});
-        chassis.waitUntilDone();
-        chassis.moveToPoint(0, 70, 1300, {.minSpeed = 127});
-        chassis.waitUntilDone();
-        chassis.moveToPoint(0, 0 , 750, {.minSpeed = 127});
-        chassis.waitUntilDone();
-    }
-    void Left_Quad() {
-        printf("Left Quad started\n");
-        chassis.setPose(63, 0, 90);
-        chassis.moveToPoint(47, 0, 750);
-        chassis.waitUntilDone();
-        Pickup.move(-12000);
-        chassis.turnToHeading(85, 750);
-        chassis.waitUntilDone();
-        Pickup.brake();
-        printf("X: %f\n", chassis.getPose().x); // x
-        printf("Y: %f\n", chassis.getPose().y); // y    
-        printf("Theta: %f\n", chassis.getPose().theta); // heading
-        Claw.move_absolute(700, 127);
-        chassis.waitUntilDone();
-        chassis.moveToPoint(46.5, 16.3, 750, {.forwards = false});
-        chassis.waitUntilDone();
-        Pickup.move_voltage(12000);
-        pros::delay(1500);
-        Pickup.brake();
         Claw.move_absolute(0,127);
-        chassis.moveToPoint(47, 0, 500);
+        chassis.moveToPoint(70, 0, 1000, {.minSpeed = 100});
         chassis.waitUntilDone();
-        chassis.turnToHeading(180, 500);
+        chassis.moveToPoint(55, 0, 1000, {.forwards = false, .maxSpeed = 127});
         chassis.waitUntilDone();
-        chassis.moveToPoint(63, 0, 750);
+        chassis.moveToPoint(70, 0, 1000, {.maxSpeed = 65});
         chassis.waitUntilDone();
-        chassis.moveToPoint(47, 0, 750, {.forwards = false});
+        chassis.moveToPoint(5, 42, 1500, {.forwards = false, .maxSpeed = 127});
         chassis.waitUntilDone();
-        chassis.moveToPoint(70, 0, 750);
-        chassis.waitUntilDone();
-        chassis.moveToPoint(0, 0 , 2000);
-        chassis.waitUntilDone();
+
+
     }
     void Skills() {
         // Need to finish LOL
         // Might do on Wednesday
-        Claw.move_absolute(1100, 127);
     }
 
 
@@ -222,6 +229,8 @@ void initialize() {
     void autonomous() {
         printf("Autonomous started\n");
         Right_Quad();
+        // Skills();
+        // Left_Quad();
         // autonTest();
         // pidTest();
     }
@@ -266,10 +275,13 @@ void initialize() {
                 IntakeFront.move_voltage(-12000);
                 IntakeBottom.move_voltage(12000);
                 Pickup.move_voltage(-12000);
+                Cascade.move_absolute(250, 127);
                 Claw.move_absolute(0, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B) && CascadeUp != 1) {
+                IntakeFront.move_voltage(-12000);
                 IntakeBottom.move_voltage(12000);
                 Pickup.move_voltage(-12000);
+                Cascade.move_absolute(250, 127);
                 Claw.move_absolute(0, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
                 IntakeFront.move_voltage(-12000);
@@ -288,10 +300,10 @@ void initialize() {
                 IntakeBottom.brake();
                 Pickup.brake();
             }
-            if (Cascade.get_position()> 400 && CascadeUp == 0)  {
+            if (Cascade.get_position()> 650 && CascadeUp == 0)  {
                 Claw.move_absolute(680, 127);
                 CascadeUp = 1;
-            } else if (Cascade.get_position() < 400 ) {
+            } else if (Cascade.get_position() < 649 ) {
                 CascadeUp = 0;
             }
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
