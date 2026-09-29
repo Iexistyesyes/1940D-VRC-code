@@ -274,9 +274,9 @@ void initialize() {
             // move the robot
             // prioritize steering slightly
             chassis.arcade(leftY, RightX, false, 0.75);
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
                 Cascade.move_voltage(12000);
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
                 Cascade.move_voltage(-12000);
             } else {
                 Cascade.move(0);
@@ -298,7 +298,7 @@ void initialize() {
                 IntakeBottom.move_voltage(-12000);
                 Pickup.move_voltage(12000);
                 Claw.move_absolute(0, 127);
-            } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+            } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
                 if (clawState == 0) {
                     Claw.move_absolute(900, 200);
                     clawState = 1;
@@ -316,12 +316,12 @@ void initialize() {
             } else if (Cascade.get_position() < 649 ) {
                 CascadeUp = 0;
             }
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
                 Pickup.move_voltage(12000);
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
                     Pickup.move_voltage(-12000);
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
                 if (clawState1 == 0) {
                     Claw.move_absolute(480, 200);
                     clawState1 = 1;
