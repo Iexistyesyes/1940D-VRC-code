@@ -635,7 +635,7 @@
       }
     },
     "upload_options": {
-      "description": "Left_Quad_Auton",
+      "description": "Right_Quad_Auton",
       "icon": "pros",
       "slot": 1
     },
