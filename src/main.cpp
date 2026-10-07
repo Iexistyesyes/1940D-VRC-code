@@ -34,11 +34,11 @@
     lemlib::ControllerSettings lateral_controller(24.7, // proportional gain (kP)
                                                 0, // integral gain (kI)
                                                 0, // derivative gain (kD)
-                                                0, // anti windup
-                                                0, // small error range, in inches
-                                                0, // small error range timeout, in milliseconds
-                                                0, // large error range, in inches
-                                                0, // large error range timeout, in milliseconds
+                                                3, // anti windup
+                                                1, // small error range, in inches
+                                                100, // small error range timeout, in milliseconds
+                                                3, // large error range, in inches
+                                                500, // large error range timeout, in milliseconds
                                                 5 // maximum acceleration (slew)
     );
 
@@ -78,6 +78,8 @@
 
 
 void initialize() {
+        left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
+        right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
     pros::lcd::initialize(); // initialize brain screen
     
     // 1. START THE SCREEN TASK FIRST!
@@ -106,6 +108,7 @@ void initialize() {
     // 2. RUN CALIBRATION AFTER THE TASK STARTS
     // The robot will calibrate in the background while your UI is fully functional.
     chassis.calibrate(); 
+    Cascade.set_zero_position(0);
 }
 
     /**
@@ -116,7 +119,6 @@ void initialize() {
 
     void disabled() {
         Claw.move_absolute(0,127);
-        Cascade.move_absolute(170,127);
     }
 
     void autonTest() {
@@ -137,6 +139,8 @@ void initialize() {
     printf("Y: %f\n", chassis.getPose().y); // y
     }
     void Right_Quad() {
+        left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
+        right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         printf("Right Quad started\n");
         chassis.setPose(9.1, 61.8, 135);
         chassis.turnToHeading(320, 750);
@@ -146,19 +150,16 @@ void initialize() {
         pros::delay(50);
         Cascade.brake();
         Claw.move_absolute(680, 127);
-        chassis.moveToPoint(18, 52, 1000, {.forwards = false, .maxSpeed = 90});
+        chassis.moveToPoint(18, 52, 1000, {.forwards = false, .maxSpeed = 65});
         chassis.waitUntilDone();
         Pickup.brake();
         pros::delay(400);
         Pickup.move_voltage(6000);
         pros::delay(350);
-        pros::delay(300);
         Pickup.brake();
-        chassis.moveToPose(0, 53, 180, 900);
+        Claw.move_absolute(900, 127);
         chassis.moveToPose(0, 53, 180, 900);
         chassis.waitUntilDone();
-        Claw.move_absolute(0,127);
-        chassis.moveToPoint(0, 70, 900, {.maxSpeed = 90});
         chassis.moveToPoint(0, 70, 800, {.minSpeed = 120});
         chassis.waitUntilDone();
         chassis.moveToPoint(0, 55, 800, {.forwards = false, .maxSpeed = 127});
@@ -166,28 +167,25 @@ void initialize() {
         chassis.moveToPoint(0, 70, 900, {.minSpeed = 120});
         chassis.waitUntilDone();
         chassis.moveToPoint(5, 42, 1000, {.forwards = false, .maxSpeed = 127});
-        chassis.moveToPoint(5, 42, 1000, {.forwards = false, .maxSpeed = 127});
         chassis.waitUntilDone();
-        chassis.turnToHeading(310, 900);
-        Claw.move_absolute(900, 127);
-        chassis.turnToHeading(320, 600);
+        chassis.turnToHeading(330, 600);
         chassis.waitUntilDone();
-        chassis.moveToPoint(16, 33, 900, {.forwards = false, .maxSpeed = 60});
-        Claw.move_absolute(900, 127);
-        chassis.moveToPoint(18.5, 32, 900, {.forwards = false});
+        chassis.moveToPoint(18.6, 30.5, 1100, {.forwards = false, .maxSpeed = 60});
         chassis.waitUntilDone();
-        Pickup.move_voltage(12000);
-        Claw.move_absolute(480, 127);
-        pros::delay(300);
+        Pickup.move_voltage(-12000);
+        Claw.move_absolute(340, 127);
+        pros::delay(1100);
         Claw.move_absolute(680,127);
         Cascade.move_voltage(12000);
-        pros::delay(400);
+        Pickup.brake();
+        pros::delay(950);
+        chassis.turnToPoint(26,43,400, {.forwards = false});
         Pickup.brake();
         Cascade.brake();
-        chassis.moveToPoint(24,39, 1000, {.forwards = false});
+        chassis.moveToPoint(28, 43, 1000, {.forwards = false});
+        chassis.waitUntilDone();
+        pros::delay(200);
         Pickup.move_voltage(6000);
-        pros::delay(400);
-        Pickup.brake();
     }
     void Left_Quad() {
        printf("Left Quad started\n");
@@ -271,7 +269,11 @@ void initialize() {
      * This task will exit when the robot is enabled and autonomous or opcontrol
      * starts.
      */
-    void competition_initialize() {}
+    void competition_initialize() {
+        left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
+        right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
+        Cascade.set_zero_position(0);
+    }
 
     /**
      * Runs the user autonomous code. This function will be started in its own task
@@ -309,7 +311,8 @@ void initialize() {
      */
     void opcontrol() {
         // Claw.set_zero_position(0);
-        Cascade.set_zero_position(0);
+        left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
+        right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         Claw.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
         Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
         int CascadeUp = 0;
@@ -320,18 +323,19 @@ void initialize() {
             int RightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
             int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
             printf("Cascade: %f\n", Cascade.get_position()); // x
+             int Tilt = imu.get_pitch();
             // move the robot
             // prioritize steering slightly
             chassis.arcade(leftY, RightX, false, 0.75);
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
                 Cascade.move_voltage(12000);
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
                 Cascade.move_voltage(-12000);
             } else {
                 Cascade.move(0);
             }
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && CascadeUp != 1) {
-                IntakeFront.move_voltage(12000);
+                IntakeFront.move_voltage(-12000);
                 IntakeBottom.move_voltage(12000);
                 Pickup.move_voltage(-12000);
                 Cascade.move_absolute(400, 127);
@@ -347,9 +351,9 @@ void initialize() {
                 IntakeBottom.move_voltage(-12000);
                 Pickup.move_voltage(12000);
                 Claw.move_absolute(0, 127);
-            } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+            } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
                 if (clawState == 0) {
-                    Claw.move_absolute(900, 200);
+                    Claw.move_absolute(1100, 200);
                     clawState = 1;
                 } else {
                     Claw.move_absolute(680,200);
@@ -359,20 +363,20 @@ void initialize() {
                 IntakeBottom.brake();
                 Pickup.brake();
                 }
-            if (Cascade.get_position()> 650 && CascadeUp == 0)  {
+            if (Cascade.get_position()> 400 && CascadeUp == 0)  {
                 Claw.move_absolute(680, 127);
                 CascadeUp = 1;
-            } else if (Cascade.get_position() < 649 ) {
+            } else if (Cascade.get_position() < 430 ) {
                 CascadeUp = 0;
             }
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
                 Pickup.move_voltage(12000);
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
                     Pickup.move_voltage(-12000);
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
                 if (clawState1 == 0) {
-                    Claw.move_absolute(480, 200);
+                    Claw.move_absolute(440, 200);
                     clawState1 = 1;
                 } else {
                     Claw.move_absolute(680,200);
@@ -384,3 +388,4 @@ void initialize() {
             pros::delay(25);
         }
     }
+ 
