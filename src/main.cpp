@@ -233,7 +233,7 @@ void initialize() {
         Claw.move_absolute(0,127);
         chassis.moveToPoint(0, 70, 800, {.minSpeed = 120});
         chassis.waitUntilDone();
-        chassis.moveToPoint(0, 55, 800, {.forwards = false, .maxSpeed = 127});
+        chassis.moveToPoint(0, 60, 950, {.forwards = false, .maxSpeed = 127});
         chassis.waitUntilDone();
         chassis.moveToPoint(0, 70, 900, {.minSpeed = 120});
         chassis.waitUntilDone();
@@ -317,6 +317,8 @@ void initialize() {
         Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
         int CascadeUp = 0;
         int clawState1 = 0;
+        int xint = chassis.getPose().x;
+        int yint = chassis.getPose().y;
         // loop forever
         while (true) {
             // get left y and right x positions
@@ -338,52 +340,60 @@ void initialize() {
                 IntakeFront.move_voltage(-12000);
                 IntakeBottom.move_voltage(12000);
                 Pickup.move_voltage(-12000);
-                Cascade.move_absolute(400, 127);
+                Cascade.move_relative(480, 127);
                 Claw.move_absolute(0, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B) && CascadeUp != 1) {
                 IntakeFront.move_voltage(12000);
                 IntakeBottom.move_voltage(12000);
                 Pickup.move_voltage(-12000);
-                Cascade.move_absolute(400, 127);
+                Cascade.move_relative(480, 127);
                 Claw.move_absolute(0, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X) && CascadeUp != 1) {
                 IntakeFront.move_voltage(-12000);
                 IntakeBottom.move_voltage(-12000);
                 Pickup.move_voltage(12000);
                 Claw.move_absolute(0, 127);
-            } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
-                if (clawState == 0) {
-                    Claw.move_absolute(1100, 200);
-                    clawState = 1;
-                } else {
-                    Claw.move_absolute(680,200);
-                    clawState = 0;
-                }} else {
+            // } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+            //     if (clawState == 0) {
+            //         Claw.move_absolute(950, 200);
+            //         clawState = 1;
+            //     } else {
+            //         Claw.move_absolute(680,200);
+            //         clawState = 0;
+            //     }
+            } else {
                 IntakeFront.brake();
                 IntakeBottom.brake();
                 Pickup.brake();
-                }
-            if (Cascade.get_position()> 400 && CascadeUp == 0)  {
+            }
+            if (Cascade.get_position()> 460 && CascadeUp == 0)  {
                 Claw.move_absolute(680, 127);
                 CascadeUp = 1;
-            } else if (Cascade.get_position() < 430 ) {
+            } else if (Cascade.get_position() < 459 ) {
                 CascadeUp = 0;
             }
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
                 Pickup.move_voltage(12000);
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+                pros::delay(1000);
+                Claw.move_absolute(900, 127);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
                     Pickup.move_voltage(-12000);
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
-                if (clawState1 == 0) {
-                    Claw.move_absolute(440, 200);
-                    clawState1 = 1;
-                } else {
-                    Claw.move_absolute(680,200);
-                    clawState1 = 0;
-                }
-            }
-
+            // if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+            //     if (clawState1 == 0) {
+            //         Claw.move_absolute(440, 200);
+            //         clawState1 = 1;
+            //     } else {
+            //         Claw.move_absolute(680,200);
+            //         clawState1 = 0;
+            //     }
+            // }
+            // if (Tilt > 1 && CascadeUp == 1) {
+            //     chassis.moveToPoint(xint+10, yint, 60);
+            // } else if (Tilt < -1 && CascadeUp == 1) {
+            //     chassis.moveToPoint(xint-10, yint, 60);
+            // }
+            printf("Pitch: %f\n", imu.get_pitch());
             // delay to save resources
             pros::delay(25);
         }
