@@ -63,8 +63,7 @@
     pros::MotorGroup Cascade({1, -10}, pros::MotorGearset::green); // cascade motors on ports 1, 8
     pros::Motor Claw({19}, pros::MotorGearset::green);
     pros::Motor Pickup(20);
-    pros::Motor IntakeFront(18);
-    pros::Motor IntakeBottom(17);
+    pros::Motor Intake(7);
     int ButtonYes1 = 1;
     int ButtonYes2 = 1;
     int clawState = 0;
@@ -118,7 +117,10 @@ void initialize() {
      */
 
     void disabled() {
-        Claw.move_absolute(0,127);
+        //skills
+        Claw.move_absolute(1000,127);
+        //normal
+        // Claw.move_absolute(0,127);
     }
 
     void autonTest() {
@@ -142,7 +144,7 @@ void initialize() {
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         printf("Right Quad started\n");
-        chassis.setPose(9.1, 61.8, 135);
+        chassis.setPose(0, 65, 0);
         chassis.turnToHeading(320, 750);
         chassis.waitUntilDone();
         Pickup.move(-12000);
@@ -215,48 +217,15 @@ void initialize() {
     }
     void Skills() {
         printf("Skills started\n");
-        chassis.setPose(9.1, 61.8, 135);
-         chassis.setPose(9.1, 61.8, 135);
-        chassis.turnToHeading(320, 750);
-        chassis.waitUntilDone();
-        Pickup.move(-12000);
-        Claw.move_absolute(680, 127);
-        chassis.moveToPoint(19.5, 52, 750, {.forwards = false});
-        chassis.waitUntilDone();
-        Pickup.brake();
-        pros::delay(300);
-        Pickup.move_voltage(6000);
-        pros::delay(300);
-        Pickup.brake();
-        chassis.moveToPose(0, 53, 180, 900);
-        chassis.waitUntilDone();
-        Claw.move_absolute(0,127);
-        chassis.moveToPoint(0, 70, 800, {.minSpeed = 120});
-        chassis.waitUntilDone();
-        chassis.moveToPoint(0, 60, 950, {.forwards = false, .maxSpeed = 127});
-        chassis.waitUntilDone();
-        chassis.moveToPoint(0, 70, 900, {.minSpeed = 120});
-        chassis.waitUntilDone();
-        chassis.moveToPoint(5, 42, 1000, {.forwards = false, .maxSpeed = 127});
-        chassis.waitUntilDone();
-        chassis.turnToHeading(320, 600);
-        chassis.waitUntilDone();
-        Claw.move_absolute(900, 127);
-        chassis.moveToPoint(18.5, 32, 900, {.forwards = false});
-        chassis.waitUntilDone();
+        chassis.setPose(0, 65, 270);
+        Claw.set_zero_position(1000);
+        Claw.move_absolute(800,127);
         Pickup.move_voltage(12000);
-        Claw.move_absolute(480, 127);
-        pros::delay(300);
-        Claw.move_absolute(680,127);
-        Cascade.move_voltage(12000);
-        pros::delay(400);
+        pros::delay(2000);
         Pickup.brake();
-        Cascade.brake();
-        chassis.moveToPoint(24,39, 1000, {.forwards = false});
-        Pickup.move_voltage(6000);
-        pros::delay(400);
-        Pickup.brake();
-        chassis.moveToPoint(0,0,900);
+        Claw.move_absolute(0,127);
+        Intake.move_voltage(12000);
+        chassis.moveToPose(47, 16, 0, 1000);
     }
 
 
@@ -337,20 +306,17 @@ void initialize() {
                 Cascade.move(0);
             }
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && CascadeUp != 1) {
-                IntakeFront.move_voltage(-12000);
-                IntakeBottom.move_voltage(12000);
+                Intake.move_voltage(12000);
                 Pickup.move_voltage(-12000);
                 Cascade.move_relative(480, 127);
                 Claw.move_absolute(0, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B) && CascadeUp != 1) {
-                IntakeFront.move_voltage(12000);
-                IntakeBottom.move_voltage(12000);
+                Intake.move_voltage(12000);
                 Pickup.move_voltage(-12000);
                 Cascade.move_relative(480, 127);
                 Claw.move_absolute(0, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X) && CascadeUp != 1) {
-                IntakeFront.move_voltage(-12000);
-                IntakeBottom.move_voltage(-12000);
+                Intake.move_voltage(-12000);
                 Pickup.move_voltage(12000);
                 Claw.move_absolute(0, 127);
             // } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
@@ -362,8 +328,7 @@ void initialize() {
             //         clawState = 0;
             //     }
             } else {
-                IntakeFront.brake();
-                IntakeBottom.brake();
+                Intake.brake();
                 Pickup.brake();
             }
             if (Cascade.get_position()> 460 && CascadeUp == 0)  {
@@ -377,7 +342,8 @@ void initialize() {
                 pros::delay(1000);
                 Claw.move_absolute(900, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-                    Pickup.move_voltage(-12000);
+                Pickup.move_voltage(-12000);
+                Claw.move_absolute(680, 127);
             }
             // if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
             //     if (clawState1 == 0) {
