@@ -21,13 +21,13 @@
     );
     pros::Imu imu(6);
     pros::Rotation vertical_encoder(7);
-    // pros::Rotation horizontal_encoder(14);
-    // lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, 2.5); // horizontal tracking wheel, 2.
+    pros::Rotation horizontal_encoder(18);
+    lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, 0.75); // horizontal tracking wheel, 2.
     lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_2, 0);
     lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
                                 nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
                                 // &horizontal_tracking_wheel, // horizontal tracking wheel 1
-                                nullptr,
+                                &horizontal_tracking_wheel,
                                 nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
                                 &imu // inertial sensor
     );
@@ -64,7 +64,7 @@
     pros::MotorGroup Cascade({1, -10}, pros::MotorGearset::green); // cascade motors on ports 1, 8
     pros::Motor Claw({19}, pros::MotorGearset::green);
     pros::Motor Pickup(20);
-    pros::Motor Intake(7);
+    pros::Motor Intake(-17);
     int ButtonYes1 = 1;
     int ButtonYes2 = 1;
     int clawState = 0;
@@ -191,8 +191,6 @@ void initialize() {
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         printf("Right Quad started\n");
         chassis.setPose(0, 65, 0);
-        chassis.turnToHeading(320, 750);
-        chassis.waitUntilDone();
         Pickup.move(-12000);
         Cascade.move_voltage(3000);
         pros::delay(50);
@@ -349,7 +347,7 @@ void initialize() {
                 Cascade.move(0);
             }
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && CascadeUp != 1) {
-                Intake.move_voltage(12000);
+                Intake.move_voltage(-12000);
                 Pickup.move_voltage(-12000);
                 Cascade.move_relative(480, 127);
                 Claw.move_absolute(0, 127);
@@ -358,10 +356,7 @@ void initialize() {
                 Pickup.move_voltage(-12000);
                 Cascade.move_relative(480, 127);
                 Claw.move_absolute(0, 127);
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X) && CascadeUp != 1) {
-                Intake.move_voltage(-12000);
-                Pickup.move_voltage(12000);
-                Claw.move_absolute(0, 127);
+            }
             // } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
             //     if (clawState == 0) {
             //         Claw.move_absolute(950, 200);
@@ -370,7 +365,7 @@ void initialize() {
             //         Claw.move_absolute(680,200);
             //         clawState = 0;
             //     }
-            } else {
+            else {
                 Intake.brake();
                 Pickup.brake();
             }
