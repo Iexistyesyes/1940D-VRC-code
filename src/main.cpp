@@ -121,8 +121,8 @@ void initialize() {
         {"RIGHT QUAD", "Right side quad. Starts at (0, 65) facing 0.", Right_Quad},
         {"LEFT QUAD", "Left side quad. Starts at (61.8, 9.1) facing -135.", Left_Quad},
         {"SKILLS", "Programming skills run. Starts at (0, 65) facing 270.", Skills},
-        {"AUTON TEST", "Drives 24 in forward with moveToPoint.", autonTest},
-        {"PID TEST", "Drives 24 in forward with moveToPose for PID tuning.", pidTest},
+        // {"AUTON TEST", "Drives 24 in forward with moveToPoint.", autonTest},
+        // {"PID TEST", "Drives 24 in forward with moveToPose for PID tuning.", pidTest},
         {"NONE", "Does nothing. Robot stays still.", nullptr},
     }, 0);
 
@@ -190,7 +190,8 @@ void initialize() {
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         printf("Right Quad started\n");
-        chassis.setPose(0, 65, 0);
+        chassis.setPose(9.1, 61.8, 135);
+        chassis.turnToHeading(320, 750);
         Pickup.move(-12000);
         Cascade.move_voltage(3000);
         pros::delay(50);
@@ -319,6 +320,8 @@ void initialize() {
      * operator control task will be stopped. Re-enabling the robot will restart the
      * task, not resume it from where it left off.
      */
+
+
     void opcontrol() {
         // Claw.set_zero_position(0);
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
@@ -330,6 +333,38 @@ void initialize() {
         int xint = chassis.getPose().x;
         int yint = chassis.getPose().y;
         // loop forever
+        pros::Task Anti_Tilt([&]() {
+            while (true) {
+                while (true) {
+                        // Threshold angle in degrees where the robot is considered "tipping"
+                    const double TILT_THRESHOLD = 15.0; 
+                    // Power applied to counteract the tip (out of 127)
+                    const int CORRECTION_POWER = 60;    
+                 // 1. Get the current pitch of the robot (forward/backward tilt)
+                    double current_pitch = imu.get_pitch();
+
+        // 2. Read driver joysticks for Arcade Drive
+                    int throttle = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+                    int turn = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+
+        // 3. Check for tipping
+                    if (current_pitch > TILT_THRESHOLD) {
+            // Robot is tipping BACKWARDS -> Force the robot to drive backwards to correct
+                        chassis.tank(-CORRECTION_POWER, -CORRECTION_POWER);
+                    } 
+                    else if (current_pitch < -TILT_THRESHOLD) {
+            // Robot is tipping FORWARDS -> Force the robot to drive forwards to correct
+                        chassis.tank(CORRECTION_POWER, CORRECTION_POWER);
+                    } 
+                    else {
+            // No tipping detected -> Hand control back over to the driver
+                        chassis.arcade(throttle, turn);
+                    }
+
+                    pros::delay(20); // Delay to save brain resources
+                }
+            }
+        });
         while (true) {
             // get left y and right x positions
             int RightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
