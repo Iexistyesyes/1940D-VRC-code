@@ -1,5 +1,6 @@
     #include "main.h"
     #include "lemlib/api.hpp"
+    #include "autonSelector.hpp"
     //merged auton test branch
     /**
      * A callback function for LLEMU's center button.
@@ -20,13 +21,13 @@
     );
     pros::Imu imu(6);
     pros::Rotation vertical_encoder(7);
-    // pros::Rotation horizontal_encoder(14);
-    // lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, 2.5); // horizontal tracking wheel, 2.
+    pros::Rotation horizontal_encoder(18);
+    lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, 0.75); // horizontal tracking wheel, 2.
     lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_2, 0);
     lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
                                 nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
                                 // &horizontal_tracking_wheel, // horizontal tracking wheel 1
-                                nullptr,
+                                &horizontal_tracking_wheel,
                                 nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
                                 &imu // inertial sensor
     );
@@ -63,48 +64,93 @@
     pros::MotorGroup Cascade({1, -10}, pros::MotorGearset::green); // cascade motors on ports 1, 8
     pros::Motor Claw({19}, pros::MotorGearset::green);
     pros::Motor Pickup(20);
-    pros::Motor Intake(7);
+    pros::Motor Intake(-17);
     int ButtonYes1 = 1;
     int ButtonYes2 = 1;
     int clawState = 0;
     int clawState2 = 0;
+
+    // autons are defined further down, declared here so the selector can list them
+    void Right_Quad();
+    void Left_Quad();
+    void Skills();
+    void autonTest();
+    void pidTest();
     /**
      * Runs initialization code. This occurs as soon as the program is started.
      *
      * All other competition modes are blocked by initialize; it is recommended
      * to keep execution time for this mode under a few seconds.
      */
+    void on_center_button() {
+	    static bool pressed = false;
+	    pressed = !pressed;
+	    if (pressed) {
+		    pros::lcd::set_text(2, "I was pressed!");
+	    } else {
+	    	pros::lcd::clear_line(2);
+	    }
+    }
+    void on_right_button() {
+	static bool pressed = false;
+	pressed = !pressed;
+	if (pressed) {
+		pros::lcd::set_text(2, "I was pressed!");
+	} else {
+		pros::lcd::clear_line(2);
+	}
+    }
+    void on_left_button() {
+	static bool pressed = false;
+	pressed = !pressed;
+	if (pressed) {
+		pros::lcd::set_text(2, "I was pressed!");
+	} else {
+		pros::lcd::clear_line(2);
+	}
+    }
 
 
 void initialize() {
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
-    pros::lcd::initialize(); // initialize brain screen
-    
-    // 1. START THE SCREEN TASK FIRST!
-    // This ensures the screen and buttons work instantly, without waiting for the IMU.
-    pros::Task screen_task([&]() {
-        // Track whether the buttons were pressed on the previous loop
-        bool last_left = false;
-        bool last_right = false;
 
+    // 1. BUILD THE AUTON SELECTOR FIRST (replaces pros::lcd, don't use both)
+    // Tap a button on the brain screen to pick the auton. The highlighted one runs in autonomous().
+    selector::init({
+        {"RIGHT QUAD", "Right side quad. Starts at (0, 65) facing 0.", Right_Quad},
+        {"LEFT QUAD", "Left side quad. Starts at (61.8, 9.1) facing -135.", Left_Quad},
+        {"SKILLS", "Programming skills run. Starts at (0, 65) facing 270.", Skills},
+        {"AUTON TEST", "Drives 24 in forward with moveToPoint.", autonTest},
+        {"PID TEST", "Drives 24 in forward with moveToPose for PID tuning.", pidTest},
+        {"NONE", "Does nothing. Robot stays still.", nullptr},
+    }, 0);
+
+    // 2. START THE SCREEN TASK
+    // Shows the odom pose on the brain and the selected auton on the controller.
+    pros::Task screen_task([&]() {
+        int lastShown = -1;
         while (true) {
-            // Print robot location and mechanisms
-            pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
-            pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-            pros::lcd::print(3, "Cascade: %d", Cascade.get_position()); // cascade position
-            pros::lcd::print(4, "Claw: %d", Claw.get_position()); // claw position
-            printf("X: %f\n", chassis.getPose().x); // x
-            printf("Y: %f\n", chassis.getPose().y); // y
-            printf("Theta: %f\n", chassis.getPose().theta); // heading
+            lemlib::Pose pose = chassis.getPose();
+            char status[48];
+            snprintf(status, sizeof(status), "X %.1f  Y %.1f  T %.1f", pose.x, pose.y, pose.theta);
+            selector::setStatus(status);
+            printf("X: %f\n", pose.x); // x
+            printf("Y: %f\n", pose.y); // y
+            printf("Theta: %f\n", pose.theta); // heading
+
+            // controller screen only updates when the pick changes (it's slow to write to)
+            if (selector::selectedIndex() != lastShown) {
+                lastShown = selector::selectedIndex();
+                controller.print(0, 0, "Auton: %-10s", selector::selectedName().c_str());
+            }
 
             // Standard delay
-            pros::delay(20);
+            pros::delay(50);
         }
     });
 
-    // 2. RUN CALIBRATION AFTER THE TASK STARTS
+    // 3. RUN CALIBRATION AFTER THE TASK STARTS
     // The robot will calibrate in the background while your UI is fully functional.
     chassis.calibrate(); 
     Cascade.set_zero_position(0);
@@ -145,8 +191,6 @@ void initialize() {
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         printf("Right Quad started\n");
         chassis.setPose(0, 65, 0);
-        chassis.turnToHeading(320, 750);
-        chassis.waitUntilDone();
         Pickup.move(-12000);
         Cascade.move_voltage(3000);
         pros::delay(50);
@@ -256,12 +300,9 @@ void initialize() {
      * from where it left off.
      */
     void autonomous() {
-        printf("Autonomous started\n");
-        Right_Quad();
-        // Skills();
-        // Left_Quad();
-        // autonTest();
-        // pidTest();
+        printf("Autonomous started: %s\n", selector::selectedName().c_str());
+        // runs whatever was picked on the brain screen
+        selector::runSelected();
     }
 
 
@@ -306,7 +347,7 @@ void initialize() {
                 Cascade.move(0);
             }
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && CascadeUp != 1) {
-                Intake.move_voltage(12000);
+                Intake.move_voltage(-12000);
                 Pickup.move_voltage(-12000);
                 Cascade.move_relative(480, 127);
                 Claw.move_absolute(0, 127);
@@ -315,10 +356,7 @@ void initialize() {
                 Pickup.move_voltage(-12000);
                 Cascade.move_relative(480, 127);
                 Claw.move_absolute(0, 127);
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X) && CascadeUp != 1) {
-                Intake.move_voltage(-12000);
-                Pickup.move_voltage(12000);
-                Claw.move_absolute(0, 127);
+            }
             // } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
             //     if (clawState == 0) {
             //         Claw.move_absolute(950, 200);
@@ -327,7 +365,7 @@ void initialize() {
             //         Claw.move_absolute(680,200);
             //         clawState = 0;
             //     }
-            } else {
+            else {
                 Intake.brake();
                 Pickup.brake();
             }

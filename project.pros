@@ -635,9 +635,9 @@
       }
     },
     "upload_options": {
-      "description": "Right_Quad_Auton",
+      "description": "New Drivecode",
       "icon": "pros",
-      "slot": 1
+      "slot": 2
     },
     "use_early_access": false
   }
