@@ -334,8 +334,7 @@ void initialize() {
         int yint = chassis.getPose().y;
         // loop forever
         pros::Task Anti_Tilt([&]() {
-            while (true) {
-                while (true) {
+				while (true) {
                         // Threshold angle in degrees where the robot is considered "tipping"
                     const double TILT_THRESHOLD = 15.0; 
                     // Power applied to counteract the tip (out of 127)
