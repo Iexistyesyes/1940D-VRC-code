@@ -40,7 +40,7 @@
                                                 100, // small error range timeout, in milliseconds
                                                 3, // large error range, in inches
                                                 500, // large error range timeout, in milliseconds
-                                                5 // maximum acceleration (slew)
+                                                3 // maximum acceleration (slew)
     );
 
     // angular PID controller
@@ -154,6 +154,7 @@ void initialize() {
     // The robot will calibrate in the background while your UI is fully functional.
     chassis.calibrate(); 
     Cascade.set_zero_position(0);
+    Claw.set_zero_position(0);
 }
 
     /**
@@ -315,21 +316,28 @@ void initialize() {
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         chassis.setPose(-9.1, 61.8, 225);
+        while (Cascade.get_position() < 1740) {
+            Cascade.move_voltage(12000);
+            pros::delay(10);
+        }
+        Cascade.brake();
         chassis.tank(60,60);
         pros::delay(200);
         // chassis.moveToPoint(-6, 55, 200);
         // chassis.waitUntilDone();
         chassis.turnToHeading(46, 1000);
-        Pickup.move(-12000);
-        Cascade.move_voltage(3000);
-        pros::delay(50);
-        Cascade.brake();
+        chassis.waitUntilDone();
         Claw.move_absolute(680, 127);
+        while (Cascade.get_position() > 600) {
+            Cascade.move_voltage(-12000);
+            pros::delay(30);
+        }
+        Cascade.brake();
         chassis.moveToPoint(-19, 53, 1400, {.forwards = false, .maxSpeed = 50});
         chassis.waitUntilDone();
         Pickup.brake();
         pros::delay(400);
-        Pickup.move_voltage(000);
+        Pickup.move_voltage(6000);
         pros::delay(350);
         Pickup.brake();
         Claw.move_absolute(900, 127);
@@ -339,25 +347,25 @@ void initialize() {
         chassis.waitUntilDone();
         chassis.moveToPoint(5, 55, 800, {.forwards = false, .maxSpeed = 70});
         chassis.waitUntilDone();
-        chassis.moveToPoint(5, 90, 1000, {.minSpeed = 70});
+        chassis.moveToPoint(5, 90, 1000, {.maxSpeed = 70});
         chassis.waitUntilDone();
         chassis.moveToPoint(-5, 40, 1000, {.forwards = false, .maxSpeed = 70});
         chassis.waitUntilDone();
         // chassis.turnToPoint(-23, 33.62, 600, {.forwards = false});
         // chassis.waitUntilDone();
-        chassis.moveToPose(-24.9, 28, 91.5, 2000, {.forwards = false, .minSpeed = 70});
+        chassis.moveToPose(-24.9, 27.67, 93, 2000, {.forwards = false, .minSpeed = 70});
         chassis.waitUntilDone();
         Pickup.move_voltage(-12000);
         Claw.move_absolute(360, 127);
         pros::delay(1100);
-        Claw.move_absolute(680,127);
+        Claw.move_absolute(670,127);
         Cascade.move_voltage(12000);
         Pickup.brake();
-        pros::delay(1050);
+        pros::delay(950);
         chassis.turnToPoint(-28, 45,400, {.forwards = false});
         Pickup.brake();
         Cascade.brake();
-        chassis.moveToPoint(-28, 45, 1000, {.forwards = false});
+        chassis.moveToPoint(-28, 45, 1500, {.forwards = false, .maxSpeed = 70});
         chassis.waitUntilDone();
         pros::delay(300);
         Pickup.move_voltage(6000);
@@ -381,6 +389,7 @@ void initialize() {
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         Cascade.set_zero_position(0);
+        Claw.set_zero_position(0);
     }
 
     /**
@@ -418,7 +427,7 @@ void initialize() {
 
 
     void opcontrol() {
-        // Claw.set_zero_position(0);
+        // Claw.set_zero_position(30);
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         Claw.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
@@ -430,32 +439,34 @@ void initialize() {
         // loop forever
         pros::Task Anti_Tilt([&]() {
             while (true) {
+                if (CascadeUp == 1) {
                         // Threshold angle in degrees where the robot is considered "tipping"
-                const double TILT_THRESHOLD = 7.0; 
+                    const double TILT_THRESHOLD = 7.0; 
                 // Power applied to counteract the tip (out of 127)
-                const int CORRECTION_POWER = 80;    
+                    const int CORRECTION_POWER = 80;    
              // 1. Get the current pitch of the robot (forward/backward tilt)
-                double current_pitch = imu.get_roll();
+                    double current_pitch = imu.get_roll();
 
         // 2. Read driver joysticks for Arcade Drive
-                int throttle = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-                int turn = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+                    int throttle = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+                    int turn = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // 3. Check for tipping
-                if (current_pitch > TILT_THRESHOLD) {
+                    if (current_pitch > TILT_THRESHOLD) {
             // Robot is tipping BACKWARDS -> Force the robot to drive backwards to correct
-                    chassis.tank(CORRECTION_POWER, CORRECTION_POWER);
-                } 
-                else if (current_pitch < -TILT_THRESHOLD) {
+                        chassis.tank(CORRECTION_POWER, CORRECTION_POWER);
+                    }
+                    else if (current_pitch < -TILT_THRESHOLD) {
             // Robot is tipping FORWARDS -> Force the robot to drive forwards to correct
                     chassis.tank(-CORRECTION_POWER, -CORRECTION_POWER);
-                } 
-                else {
+                    } 
+                    else {
             // No tipping detected -> Hand control back over to the driver
-                    chassis.arcade(throttle, turn);
+                        chassis.arcade(throttle, turn);
+                    }
+                    printf("Pitch: %f\n", current_pitch);
+                    pros::delay(20); // Delay to save brain resources
                 }
-                printf("Pitch: %f\n", current_pitch);
-                pros::delay(20); // Delay to save brain resources
             }
         });
         // pros::Task ClawupTask([&]() {
@@ -492,16 +503,16 @@ void initialize() {
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && CascadeUp != 1) {
                 Intake.move_voltage(-12000);
                 Pickup.move_voltage(12000);
-                Claw.move_absolute(30, 127);
-                while (Cascade.get_position() < 1740) {
+                Claw.move_absolute(10, 127);
+                while (Cascade.get_position() < 1640) {
                     Cascade.move_voltage(12000);
                     pros::delay(10);
                 }
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B) && CascadeUp != 1) {
                 Intake.move_voltage(12000);
                 Pickup.move_voltage(-12000);
-                Claw.move_absolute(30, 127);
-                while (Cascade.get_position() < 1740) {
+                Claw.move_absolute(10, 127);
+                while (Cascade.get_position() < 1640) {
                     Cascade.move_voltage(12000);
                     pros::delay(10);
                 }
@@ -529,12 +540,12 @@ void initialize() {
             }
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
                 Pickup.move_voltage(12000);
-                pros::delay(800);
+                pros::delay(600);
                 Claw.move_absolute(1100, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
                 Pickup.move_voltage(-12000);
                 Claw.move_absolute(480, 127);
-                pros::delay(800);
+                pros::delay(600);
                 Claw.move_absolute(680, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
                 Claw.move_absolute(680,127);
