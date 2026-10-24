@@ -431,7 +431,7 @@ void initialize() {
         pros::Task Anti_Tilt([&]() {
             while (true) {
                         // Threshold angle in degrees where the robot is considered "tipping"
-                const double TILT_THRESHOLD = 10.0; 
+                const double TILT_THRESHOLD = 7.0; 
                 // Power applied to counteract the tip (out of 127)
                 const int CORRECTION_POWER = 80;    
              // 1. Get the current pitch of the robot (forward/backward tilt)
@@ -454,7 +454,7 @@ void initialize() {
             // No tipping detected -> Hand control back over to the driver
                     chassis.arcade(throttle, turn);
                 }
-                // printf("Pitch: %f\n", current_pitch);
+                printf("Pitch: %f\n", current_pitch);
                 pros::delay(20); // Delay to save brain resources
             }
         });
@@ -477,7 +477,7 @@ void initialize() {
             // get left y and right x positions
             int RightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
             int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-            printf("Cascade: %f\n", Cascade.get_position()); // x
+            // printf("Cascade: %f\n", Cascade.get_position()); // x
              int Tilt = imu.get_pitch();
             // move the robot
             // prioritize steering slightly
@@ -492,11 +492,19 @@ void initialize() {
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && CascadeUp != 1) {
                 Intake.move_voltage(-12000);
                 Pickup.move_voltage(12000);
-                Claw.move_absolute(0, 127);
+                Claw.move_absolute(30, 127);
+                while (Cascade.get_position() < 1740) {
+                    Cascade.move_voltage(12000);
+                    pros::delay(10);
+                }
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B) && CascadeUp != 1) {
                 Intake.move_voltage(12000);
                 Pickup.move_voltage(-12000);
-                Claw.move_absolute(0, 127);
+                Claw.move_absolute(30, 127);
+                while (Cascade.get_position() < 1740) {
+                    Cascade.move_voltage(12000);
+                    pros::delay(10);
+                }
             }
             // } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
             //     if (clawState == 0) {
@@ -510,13 +518,13 @@ void initialize() {
                 Intake.brake();
                 Pickup.brake();
             }
-            if (Cascade.get_position() < 750 && Cascade.get_position() > 730) {
-                controller.rumble("...");
-            }
-            if (Cascade.get_position()> 1100 && CascadeUp == 0)  {
+            // if (Cascade.get_position() < 1730 && Cascade.get_position() > 1745) {
+            //     controller.rumble("...");
+            // }
+            if (Cascade.get_position()> 1990 && CascadeUp == 0)  {
                 Claw.move_absolute(680, 127);
                 CascadeUp = 1;
-            } else if (Cascade.get_position() < 1000 ) {
+            } else if (Cascade.get_position() < 1988 ) {
                 CascadeUp = 0;
             }
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
@@ -526,8 +534,14 @@ void initialize() {
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
                 Pickup.move_voltage(-12000);
                 Claw.move_absolute(480, 127);
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
+                pros::delay(800);
+                Claw.move_absolute(680, 127);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
                 Claw.move_absolute(680,127);
+            }
+            if (drivetrain.leftMotors->get_temperature() > 60 || drivetrain.rightMotors->get_temperature() > 60) {
+                controller.rumble("...");
+                controller.print(0, 0, "Motors hot: %d°C", drivetrain.leftMotors->get_temperature());
             }
             // if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
             //     if (clawState1 == 0) {
