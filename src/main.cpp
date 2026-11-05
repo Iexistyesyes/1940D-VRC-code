@@ -1,14 +1,8 @@
     #include "main.h"
     #include "lemlib/api.hpp"
     #include "autonSelector.hpp"
-    //merged auton test branch
-    /**
-     * A callback function for LLEMU's center button.
-     *
-     * When this callback is fired, it will toggle line 2 of the LCD text between
-     * "I was pressed!" and nothing.
-     */
     int autonSelected = 0;
+    int autonRunning = 0;
     // INITIALISATION DO NOT TOUCH
     pros::MotorGroup left_motors({-2, -3}, pros::MotorGearset::blue); // left motors on ports 2, 3
     pros::MotorGroup right_motors({4, 5}, pros::MotorGearset::blue); // right motors on ports 9, 10
@@ -198,6 +192,7 @@ void initialize() {
         chassis.moveToPoint(0, 70, 900, {.minSpeed = 120});
         chassis.waitUntilDone();
         chassis.moveToPoint(0, 40, 2000);
+        autonRunning = 0;
     }
     void pidTest() {
     // set position to x:0, y:0, heading:0
@@ -207,6 +202,7 @@ void initialize() {
     chassis.waitUntilDone();
     printf("X: %f\n", chassis.getPose().x); // x
     printf("Y: %f\n", chassis.getPose().y); // y
+    autonRunning = 0;
     }
     void Right_Quad() {
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
@@ -255,6 +251,7 @@ void initialize() {
         chassis.waitUntilDone();
         pros::delay(200);
         Pickup.move_voltage(6000);
+        autonRunning = 0;
     }
     void Left_Quad() {
        printf("Left Quad started\n");
@@ -310,6 +307,7 @@ void initialize() {
         pros::delay(600);
         Pickup.brake();
         Claw.move_absolute(900,127);
+        autonRunning = 0;
     }
     void Skills() {
         printf("Skills started\n");
@@ -373,6 +371,7 @@ void initialize() {
         Pickup.brake();
         Claw.move_absolute(900,127);
         chassis.moveToPoint(0,0,1000);
+        autonRunning = 0;
     }
 
 
@@ -405,6 +404,7 @@ void initialize() {
      */
     void autonomous() {
         int autonstart = 0;
+        autonRunning = 1;
         printf("Autonomous started: %s\n", selector::selectedName().c_str());
         // runs whatever was picked on the brain screen
             selector::runSelected();
@@ -439,7 +439,7 @@ void initialize() {
         // loop forever
         pros::Task Anti_Tilt([&]() {
             while (true) {
-                if (CascadeUp == 1) {
+                if (CascadeUp == 1 && autonRunning == 0) {
                         // Threshold angle in degrees where the robot is considered "tipping"
                     const double TILT_THRESHOLD = 7.0; 
                 // Power applied to counteract the tip (out of 127)
