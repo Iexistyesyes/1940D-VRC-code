@@ -524,16 +524,7 @@ void initialize() {
                     Cascade.move_voltage(12000);
                     pros::delay(10);
                 }
-            }
-            // } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-            //     if (clawState == 0) {
-            //         Claw.move_absolute(950, 200);
-            //         clawState = 1;
-            //     } else {
-            //         Claw.move_absolute(680,200);
-            //         clawState = 0;
-            //     }
-            else {
+            }else {
                 Intake.brake();
                 Pickup.brake();
             }
