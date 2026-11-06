@@ -69,7 +69,7 @@
     int ButtonYes2 = 1;
     int clawState = 0;
     int clawState2 = 0;
-
+    int autonRunning = 0;
     // autons are defined further down, declared here so the selector can list them
     void Right_Quad();
     void Left_Quad();
@@ -171,6 +171,7 @@ void initialize() {
     }
 
     void RightQuadNoStack() {
+        autonRunning = 1;
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         printf("Right Quad started\n");
@@ -180,7 +181,7 @@ void initialize() {
         Cascade.move_voltage(3000);
         pros::delay(50);
         Cascade.brake();
-        Claw.move_absolute(680, 127);
+        Claw.move_absolute(510, 127);
         chassis.moveToPoint(18, 52, 1000, {.forwards = false, .maxSpeed = 65});
         chassis.waitUntilDone();
         Pickup.brake();
@@ -198,6 +199,7 @@ void initialize() {
         chassis.moveToPoint(0, 70, 900, {.minSpeed = 120});
         chassis.waitUntilDone();
         chassis.moveToPoint(0, 40, 2000);
+        autonRunning = 0;
     }
     void pidTest() {
     // set position to x:0, y:0, heading:0
@@ -209,6 +211,7 @@ void initialize() {
     printf("Y: %f\n", chassis.getPose().y); // y
     }
     void Right_Quad() {
+        autonRunning = 1;
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         printf("Right Quad started\n");
@@ -218,7 +221,7 @@ void initialize() {
         Cascade.move_voltage(3000);
         pros::delay(50);
         Cascade.brake();
-        Claw.move_absolute(680, 127);
+        Claw.move_absolute(510, 127);
         chassis.moveToPoint(18, 52, 1000, {.forwards = false, .maxSpeed = 65});
         chassis.waitUntilDone();
         Pickup.brake();
@@ -244,7 +247,7 @@ void initialize() {
         Pickup.move_voltage(-12000);
         Claw.move_absolute(340, 127);
         pros::delay(1100);
-        Claw.move_absolute(680,127);
+        Claw.move_absolute(510,127);
         Cascade.move_voltage(12000);
         Pickup.brake();
         pros::delay(950);
@@ -255,8 +258,10 @@ void initialize() {
         chassis.waitUntilDone();
         pros::delay(200);
         Pickup.move_voltage(6000);
+        autonRunning = 0;
     }
     void Left_Quad() {
+        autonRunning = 1;
        printf("Left Quad started\n");
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
@@ -296,7 +301,7 @@ void initialize() {
         Pickup.move_voltage(-12000);
         Claw.move_absolute(380, 127);
         pros::delay(1100);
-        Claw.move_absolute(680,127);
+        Claw.move_absolute(510,127);
         Cascade.move_voltage(12000);
         Pickup.brake();
         pros::delay(1050);
@@ -310,8 +315,10 @@ void initialize() {
         pros::delay(600);
         Pickup.brake();
         Claw.move_absolute(900,127);
+        autonRunning = 0;
     }
     void Skills() {
+        autonRunning = 1;
         printf("Skills started\n");
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
@@ -327,7 +334,7 @@ void initialize() {
         // chassis.waitUntilDone();
         chassis.turnToHeading(46, 1000);
         chassis.waitUntilDone();
-        Claw.move_absolute(680, 127);
+        Claw.move_absolute(510, 127);
         while (Cascade.get_position() > 600) {
             Cascade.move_voltage(-12000);
             pros::delay(30);
@@ -373,6 +380,7 @@ void initialize() {
         Pickup.brake();
         Claw.move_absolute(900,127);
         chassis.moveToPoint(0,0,1000);
+        autonRunning = 0;
     }
 
 
@@ -439,7 +447,7 @@ void initialize() {
         // loop forever
         pros::Task Anti_Tilt([&]() {
             while (true) {
-                if (CascadeUp == 1) {
+                if (CascadeUp == 1 and autonRunning == 0) {
                         // Threshold angle in degrees where the robot is considered "tipping"
                     const double TILT_THRESHOLD = 7.0; 
                 // Power applied to counteract the tip (out of 127)
@@ -503,7 +511,7 @@ void initialize() {
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && CascadeUp != 1) {
                 Intake.move_voltage(-12000);
                 Pickup.move_voltage(12000);
-                Claw.move_absolute(10, 127);
+                Claw.move_absolute(0, 127);
                 while (Cascade.get_position() < 1640) {
                     Cascade.move_voltage(12000);
                     pros::delay(10);
@@ -511,7 +519,7 @@ void initialize() {
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B) && CascadeUp != 1) {
                 Intake.move_voltage(12000);
                 Pickup.move_voltage(-12000);
-                Claw.move_absolute(10, 127);
+                Claw.move_absolute(0, 127);
                 while (Cascade.get_position() < 1640) {
                     Cascade.move_voltage(12000);
                     pros::delay(10);
@@ -533,7 +541,7 @@ void initialize() {
             //     controller.rumble("...");
             // }
             if (Cascade.get_position()> 1990 && CascadeUp == 0)  {
-                Claw.move_absolute(680, 127);
+                Claw.move_absolute(510, 127);
                 CascadeUp = 1;
             } else if (Cascade.get_position() < 1988 ) {
                 CascadeUp = 0;
@@ -542,13 +550,16 @@ void initialize() {
                 Pickup.move_voltage(12000);
                 pros::delay(600);
                 Claw.move_absolute(1100, 127);
+                Cascade.move(127);
+                pros::delay(300);
+                Cascade.brake();
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
                 Pickup.move_voltage(-12000);
                 Claw.move_absolute(480, 127);
                 pros::delay(600);
-                Claw.move_absolute(680, 127);
+                Claw.move_absolute(510, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-                Claw.move_absolute(680,127);
+                Claw.move_absolute(510,127);
             }
             if (drivetrain.leftMotors->get_temperature() > 60 || drivetrain.rightMotors->get_temperature() > 60) {
                 controller.rumble("...");
