@@ -529,7 +529,7 @@ void initialize() {
                 Cascade.brake();
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
                 Pickup.move_voltage(-12000);
-
+                Claw.move_absolute(510, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
                 Claw.move_absolute(510,127);
             }
