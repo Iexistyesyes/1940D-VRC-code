@@ -441,42 +441,12 @@ void initialize() {
         Claw.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
         Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
         int CascadeUp = 0;
+        std::uint32_t liftToIntakeUntil = 0; // Y/B keep raising the cascade until this time
         int clawState1 = 0;
-        int xint = chassis.getPose().x;
-        int yint = chassis.getPose().y;
-        // loop forever
-        pros::Task Anti_Tilt([&]() {
-            while (true) {
-                if (CascadeUp == 1 and autonRunning == 0) {
-                        // Threshold angle in degrees where the robot is considered "tipping"
-                    const double TILT_THRESHOLD = 7.0; 
-                // Power applied to counteract the tip (out of 127)
-                    const int CORRECTION_POWER = 80;    
-             // 1. Get the current pitch of the robot (forward/backward tilt)
-                    double current_pitch = imu.get_roll();
-
-        // 2. Read driver joysticks for Arcade Drive
-                    int throttle = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-                    int turn = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-
-        // 3. Check for tipping
-                    if (current_pitch > TILT_THRESHOLD) {
-            // Robot is tipping BACKWARDS -> Force the robot to drive backwards to correct
-                        chassis.tank(CORRECTION_POWER, CORRECTION_POWER);
-                    }
-                    else if (current_pitch < -TILT_THRESHOLD) {
-            // Robot is tipping FORWARDS -> Force the robot to drive forwards to correct
-                    chassis.tank(-CORRECTION_POWER, -CORRECTION_POWER);
-                    } 
-                    else {
-            // No tipping detected -> Hand control back over to the driver
-                        chassis.arcade(throttle, turn);
-                    }
-                    printf("Pitch: %f\n", current_pitch);
-                    pros::delay(20); // Delay to save brain resources
-                }
-            }
-        });
+        // Threshold angle in degrees where the robot is considered "tipping"
+        const double TILT_THRESHOLD = 7.0;
+        // Power applied to counteract the tip (out of 127)
+        const int CORRECTION_POWER = 80;
         // pros::Task ClawupTask([&]() {
         //     while (true) {
         //         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
@@ -497,14 +467,33 @@ void initialize() {
             int RightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
             int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
             // printf("Cascade: %f\n", Cascade.get_position()); // x
-             int Tilt = imu.get_pitch();
-            // move the robot
-            // prioritize steering slightly
-            chassis.arcade(leftY, RightX, false, 0.75);
+            // anti tilt, only while the cascade is up. this loop is the only thing that drives the
+            // chassis in driver control, a second task driving it would fight this one
+            // get_roll() is INFINITY when the IMU is unplugged, so only act on a real reading
+            double roll = imu.get_roll();
+            bool checkTilt = CascadeUp == 1 && autonRunning == 0 && std::isfinite(roll);
+            if (checkTilt) {
+                printf("Pitch: %f\n", roll);
+            }
+            if (checkTilt && roll > TILT_THRESHOLD) {
+                // drives forward. if that makes a tip worse on the robot, swap the signs on both tank() calls
+                chassis.tank(CORRECTION_POWER, CORRECTION_POWER);
+            } else if (checkTilt && roll < -TILT_THRESHOLD) {
+                chassis.tank(-CORRECTION_POWER, -CORRECTION_POWER);
+            } else {
+                // move the robot
+                // prioritize steering slightly
+                chassis.arcade(leftY, RightX, false, 0.75);
+            }
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
                 Cascade.move_voltage(12000);
+                liftToIntakeUntil = 0;
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
                 Cascade.move_voltage(-12000);
+                liftToIntakeUntil = 0;
+            } else if (Cascade.get_position() < 1640 && pros::millis() < liftToIntakeUntil) {
+                // Y or B was pressed: keep raising the cascade to 1640, give up after 3 s
+                Cascade.move_voltage(12000);
             } else {
                 Cascade.brake();
             }
@@ -512,18 +501,12 @@ void initialize() {
                 Intake.move_voltage(-12000);
                 Pickup.move_voltage(12000);
                 Claw.move_absolute(0, 127);
-                while (Cascade.get_position() < 1640) {
-                    Cascade.move_voltage(12000);
-                    pros::delay(10);
-                }
+                liftToIntakeUntil = pros::millis() + 3000; // raise the cascade without freezing the loop
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B) && CascadeUp != 1) {
                 Intake.move_voltage(12000);
                 Pickup.move_voltage(-12000);
                 Claw.move_absolute(0, 127);
-                while (Cascade.get_position() < 1640) {
-                    Cascade.move_voltage(12000);
-                    pros::delay(10);
-                }
+                liftToIntakeUntil = pros::millis() + 3000; // raise the cascade without freezing the loop
             }else {
                 Intake.brake();
                 Pickup.brake();
@@ -562,11 +545,6 @@ void initialize() {
             //         Claw.move_absolute(680,200);
             //         clawState1 = 0;
             //     }
-            // }
-            // if (Tilt > 1 && CascadeUp == 1) {
-            //     chassis.moveToPoint(xint+10, yint, 60);
-            // } else if (Tilt < -1 && CascadeUp == 1) {
-            //     chassis.moveToPoint(xint-10, yint, 60);
             // }
             // delay to save resources
             pros::delay(25);
