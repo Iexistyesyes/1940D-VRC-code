@@ -334,7 +334,7 @@ void initialize() {
         // chassis.waitUntilDone();
         chassis.turnToHeading(46, 1000);
         chassis.waitUntilDone();
-        Claw.move_absolute(510, 127);
+        Claw.move_absolute(900, 127);
         while (Cascade.get_position() > 600) {
             Cascade.move_voltage(-12000);
             pros::delay(30);
