@@ -538,6 +538,9 @@ void initialize() {
                 Claw.move_absolute(900, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
                 Claw.move_absolute(900,127);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+                Claw.move_absolute(1360,127);
+                Pickup.move_voltage(12000);
             }
             if (drivetrain.leftMotors->get_temperature() > 60 || drivetrain.rightMotors->get_temperature() > 60) {
                 controller.rumble("...");
