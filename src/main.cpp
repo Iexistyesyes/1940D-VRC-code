@@ -362,7 +362,7 @@ void initialize() {
         // chassis.waitUntilDone();
         chassis.moveToPose(-24.9, 27.67, 93, 2000, {.forwards = false, .minSpeed = 70});
         chassis.waitUntilDone();
-        while (Cascade.get_position() < 1740) {
+        while (Cascade.get_position() < 2500) {
             Cascade.move_voltage(12000);
             pros::delay(10);
         }
