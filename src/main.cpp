@@ -523,15 +523,15 @@ void initialize() {
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
                 Pickup.move_voltage(12000);
                 pros::delay(600);
-                Claw.move_absolute(1100, 127);
+                Claw.move_absolute(1460, 127);
                 Cascade.move(127);
                 pros::delay(300);
                 Cascade.brake();
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
                 Pickup.move_voltage(-12000);
-                Claw.move_absolute(560, 127);
+                Claw.move_absolute(900, 127);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-                Claw.move_absolute(560,127);
+                Claw.move_absolute(900,127);
             }
             if (drivetrain.leftMotors->get_temperature() > 60 || drivetrain.rightMotors->get_temperature() > 60) {
                 controller.rumble("...");
@@ -546,6 +546,7 @@ void initialize() {
             //         clawState1 = 0;
             //     }
             // }
+            //IdkmanIjustfeellikeitwouldbehelpfultohaveanintroductiontothecodeanditspurpose,aswellasanyrelevantcontextorbackgroundinformationthatwouldhelptheuserunderstandthecodebetter.
             // delay to save resources
             pros::delay(25);
         }
