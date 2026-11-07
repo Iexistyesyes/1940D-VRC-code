@@ -334,7 +334,7 @@ void initialize() {
         // chassis.waitUntilDone();
         chassis.turnToHeading(46, 1000);
         chassis.waitUntilDone();
-        Claw.move_absolute(900, 127);
+        Claw.move_absolute(880, 127);
         while (Cascade.get_position() > 600) {
             Cascade.move_voltage(-12000);
             pros::delay(30);
@@ -360,15 +360,15 @@ void initialize() {
         chassis.waitUntilDone();
         // chassis.turnToPoint(-23, 33.62, 600, {.forwards = false});
         // chassis.waitUntilDone();
-        chassis.moveToPose(-24.9, 27.67, 93, 2000, {.forwards = false, .minSpeed = 70});
+        chassis.moveToPose(-25, 27.67, 93, 2000, {.forwards = false, .minSpeed = 70});
         chassis.waitUntilDone();
-        while (Cascade.get_position() < 2500) {
+        while (Cascade.get_position() < 2900) {
             Cascade.move_voltage(12000);
             pros::delay(10);
         }
         Cascade.brake();
         Pickup.move_voltage(-12000);
-        while (Cascade.get_position() < 200) {
+        while (Cascade.get_position() > 200) {
             Cascade.move_voltage(-12000);
             pros::delay(10);
         }
