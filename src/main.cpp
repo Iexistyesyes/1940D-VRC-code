@@ -1,6 +1,8 @@
     #include "main.h"
     #include "lemlib/api.hpp"
     #include "autonSelector.hpp"
+    #include "settings.hpp"
+    #include "underglow.hpp"
     //merged auton test branch
     /**
      * A callback function for LLEMU's center button.
@@ -117,34 +119,63 @@ void initialize() {
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
 
-    // 1. BUILD THE AUTON SELECTOR FIRST (replaces pros::lcd, don't use both)
-    // Tap a button on the brain screen to pick the auton. The highlighted one runs in autonomous().
-    selector::init({
-        {"RIGHT QUAD", "Right side quad. Starts at (0, 65) facing 0.", Right_Quad},
-        {"LEFT QUAD", "Left side quad. Starts at (61.8, 9.1) facing -135.", Left_Quad},
-        {"SKILLS", "Programming skills run. Starts at (0, 65) facing 270.", Skills},
-        {"Right Quad No stack", "Same as right quad without the second pin and cup", RightQuadNoStack},
-        {"PID TEST", "Drives 24 in forward with moveToPose for PID tuning.", pidTest},
-        {"NONE", "Does nothing. Robot stays still.", nullptr},
-    }, 0);
+    // 1. BUILD THE BRAIN SCREEN FIRST (replaces pros::lcd, don't use both)
+    // Tabs: AUTON (pick the auton), STATS, ALLIANCE (red / blue), DISPLAY (picture shown during the match)
+    // and LEDS (underglow animations).
+    selector::init(
+        // autons: 12 fit on a page, add more and page arrows show up
+        {
+            {"RIGHT QUAD", "Right side quad. Starts at (0, 65) facing 0.", Right_Quad},
+            {"LEFT QUAD", "Left side quad. Starts at (61.8, 9.1) facing -135.", Left_Quad},
+            {"SKILLS", "Programming skills run. Starts at (0, 65) facing 270.", Skills},
+            {"Right Quad No stack", "Same as right quad without the second pin and cup", RightQuadNoStack},
+            {"PID TEST", "Drives 24 in forward with moveToPose for PID tuning.", pidTest},
+            {"NONE", "Does nothing. Robot stays still.", nullptr},
+        },
+        // tiles on the STATS tab (up to 12)
+        {
+            selector::motorTemp("L DRIVE", left_motors),
+            selector::motorTemp("R DRIVE", right_motors),
+            selector::motorTemp("CASCADE", Cascade),
+            selector::motorTemp("CLAW", Claw),
+            selector::motorTemp("PICKUP", Pickup),
+            selector::motorTemp("INTAKE", Intake),
+            selector::battery(),
+            {"X", [] { return (double)chassis.getPose().x; }, "%.1f"},
+            {"Y", [] { return (double)chassis.getPose().y; }, "%.1f"},
+            {"HEADING", [] { return (double)chassis.getPose().theta; }, "%.1f°"},
+            {"CASC POS", [] { return Cascade.get_position(); }},
+            {"CLAW POS", [] { return Claw.get_position(); }},
+        });
+
+    // underglow on 3-wire ports A and B (LED count + brightness are in include/underglow.hpp).
+    // Numbers are positions in the list in src/underglowAnimations.cpp, changed on the brain's LEDS tab:
+    // before / after the match = CHRISTMAS, during the match = LOGO YELLOW
+    underglow::init(/*idle*/ 1, /*match*/ 0);
+
+    // remember the picks above between runs (saved on the SD card, see include/settings.hpp).
+    // The defaults above are only used the first time, or when there's no SD card
+    settings::init();
 
     // 2. START THE SCREEN TASK
-    // Shows the odom pose on the brain and the selected auton on the controller.
+    // Prints the odom pose to the terminal and shows the alliance + auton pick on the controller.
     pros::Task screen_task([&]() {
-        int lastShown = -1;
+        int lastAuton = -1;
+        int lastAlliance = -1;
         while (true) {
             lemlib::Pose pose = chassis.getPose();
-            char status[48];
-            snprintf(status, sizeof(status), "X %.1f  Y %.1f  T %.1f", pose.x, pose.y, pose.theta);
-            selector::setStatus(status);
+            (void)pose; // only used by the printfs below
             // printf("X: %f\n", pose.x); // x
             // printf("Y: %f\n", pose.y); // y
             // printf("Theta: %f\n", pose.theta); // heading
 
-            // controller screen only updates when the pick changes (it's slow to write to)
-            if (selector::selectedIndex() != lastShown) {
-                lastShown = selector::selectedIndex();
-                controller.print(0, 0, "Auton: %-10s", selector::selectedName().c_str());
+            // controller screen only updates when a pick changes (it's slow to write to)
+            int auton = selector::selectedIndex();
+            int alliance = selector::isRed() ? 0 : 1;
+            if (auton != lastAuton || alliance != lastAlliance) {
+                lastAuton = auton;
+                lastAlliance = alliance;
+                controller.print(0, 0, "%s %-12s", alliance == 0 ? "RED" : "BLU", selector::selectedName().c_str());
             }
 
             // Standard delay
@@ -538,12 +569,6 @@ void initialize() {
             // if (Cascade.get_position() < 1730 && Cascade.get_position() > 1745) {
             //     controller.rumble("...");
             // }
-            if (Cascade.get_position()> 1600 && CascadeUp == 0)  {
-                Claw.move_absolute(660, 127);
-                CascadeUp = 1;
-            } else if (Cascade.get_position() < 1588 ) {
-                CascadeUp = 0;
-            }
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
                 Pickup.move_voltage(12000);
                 pros::delay(300);
