@@ -3,6 +3,8 @@
     #include "autonSelector.hpp"
     #include "settings.hpp"
     #include "underglow.hpp"
+    #include "pros/optical.hpp"
+    #include <cmath>
     //merged auton test branch
     /**
      * A callback function for LLEMU's center button.
@@ -67,6 +69,8 @@
     pros::Motor Claw({19}, pros::MotorGearset::green);
     pros::Motor Pickup(18);
     pros::Motor Intake(-17);
+    pros::Motor autotogglemotor(20);
+    pros::Optical opticalSensor(11);
     int ButtonYes1 = 1;
     int ButtonYes2 = 1;
     int clawState = 0;
@@ -188,6 +192,7 @@ void initialize() {
     chassis.calibrate(); 
     Cascade.set_zero_position(0);
     Claw.set_zero_position(0);
+    // opticalSensor.set_led_pwm(100);
 }
 
     /**
@@ -495,6 +500,48 @@ void initialize() {
         int CascadeUp = 0;
         std::uint32_t liftToIntakeUntil = 0; // Y/B keep raising the cascade until this time
         int clawState1 = 0;
+        pros::Task AutoToggle([&]() {
+            bool wasMatching = false;
+            const int OBJECT_THRESHOLD = 100;
+            const double MIN_SATURATION = 0.25;
+            const double RED_LOW_MIN = 0;
+            const double RED_LOW_MAX = 20;
+            const double RED_HIGH_MIN = 340;
+            const double RED_HIGH_MAX = 360;
+            const double BLUE_MIN = 190;
+            const double BLUE_MAX = 250;
+            while (true) {
+                double hue = opticalSensor.get_hue();
+                double saturation = opticalSensor.get_saturation();
+                int proximity = opticalSensor.get_proximity();
+
+                bool objectDetected =
+                    proximity > OBJECT_THRESHOLD &&
+                    saturation > MIN_SATURATION &&
+                    std::isfinite(hue);
+                bool matchingColour = false;
+
+                if (objectDetected) {
+                    if (selector::alliance() == selector::Alliance::RED) {
+                        matchingColour =
+                            (hue >= RED_LOW_MIN && hue <= RED_LOW_MAX) ||
+                            (hue >= RED_HIGH_MIN && hue <= RED_HIGH_MAX);
+                    }
+
+                    else if (selector::alliance() == selector::Alliance::BLUE) {
+                        matchingColour =
+                            hue >= BLUE_MIN && hue <= BLUE_MAX;
+                    }
+                }
+                if (matchingColour && !wasMatching) {
+                    autotogglemotor.move_relative(180, 100);
+                }
+
+                wasMatching = matchingColour;
+
+                pros::delay(25);
+            }
+        });
         // Threshold angle in degrees where the robot is considered "tipping"
         const double TILT_THRESHOLD = 7.0;
         // Power applied to counteract the tip (out of 127)
