@@ -47,6 +47,28 @@
         "user_files": [],
         "version": "0.5.6"
       },
+      "HitLib": {
+        "location": "",
+        "metadata": {
+          "origin": "local"
+        },
+        "name": "HitLib",
+        "py/object": "pros.conductor.templates.local_template.LocalTemplate",
+        "supported_kernels": ">=4.2.0",
+        "system_files": [
+          "include/hitlib/hitapi.hpp",
+          "include/hitlib/led_group.hpp",
+          "include/hitlib/led_profile.hpp",
+          "include/hitlib/led_sequencer.hpp",
+          "include/hitlib/led_strand.hpp",
+          "include/hitlib/platform.hpp",
+          "include/hitlib/profiles/classic.hpp",
+          "firmware/hitlib.a"
+        ],
+        "target": "v5",
+        "user_files": [],
+        "version": "1.6.1"
+      },
       "kernel": {
         "location": "C:\\Users\\lukel\\AppData\\Roaming\\PROS\\templates\\kernel@4.2.1",
         "metadata": {

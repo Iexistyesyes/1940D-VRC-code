@@ -1,6 +1,8 @@
     #include "main.h"
     #include "lemlib/api.hpp"
     #include "autonSelector.hpp"
+    #include "settings.hpp"
+    #include "underglow.hpp"
     //merged auton test branch
     /**
      * A callback function for LLEMU's center button.
@@ -63,8 +65,8 @@
     pros::Controller controller(pros::E_CONTROLLER_MASTER);
     pros::MotorGroup Cascade({-11, 12}, pros::MotorGearset::green); // cascade motors on ports 1, 8
     pros::Motor Claw({7}, pros::MotorGearset::green);
-    pros::Optical OpticalSensor(8);
-
+    pros::Optical opticalSensor(8);
+    pros::Motor Togglemotor({13}, pros::MotorGearset::green);
 
     int autonRunning = 0;
     int autonFinished = 0;
@@ -114,34 +116,63 @@ void initialize() {
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
 
-    // 1. BUILD THE AUTON SELECTOR FIRST (replaces pros::lcd, don't use both)
-    // Tap a button on the brain screen to pick the auton. The highlighted one runs in autonomous().
-    selector::init({
-        {"RIGHT QUAD", "Right side quad. Starts at (0, 65) facing 0.", Right_Quad},
-        {"LEFT QUAD", "Left side quad. Starts at (61.8, 9.1) facing -135.", Left_Quad},
-        {"SKILLS", "Programming skills run. Starts at (0, 65) facing 270.", Skills},
-        {"Right Quad No stack", "Same as right quad without the second pin and cup", RightQuadNoStack},
-        {"PID TEST", "Drives 24 in forward with moveToPose for PID tuning.", pidTest},
-        {"NONE", "Does nothing. Robot stays still.", nullptr},
-    }, 0);
+    // 1. BUILD THE BRAIN SCREEN FIRST (replaces pros::lcd, don't use both)
+    // Tabs: AUTON (pick the auton), STATS, ALLIANCE (red / blue), DISPLAY (picture shown during the match)
+    // and LEDS (underglow animations).
+    selector::init(
+        // autons: 12 fit on a page, add more and page arrows show up
+        {
+            {"RIGHT QUAD", "Right side quad. Starts at (0, 65) facing 0.", Right_Quad},
+            {"LEFT QUAD", "Left side quad. Starts at (61.8, 9.1) facing -135.", Left_Quad},
+            {"SKILLS", "Programming skills run. Starts at (0, 65) facing 270.", Skills},
+            {"Right Quad No stack", "Same as right quad without the second pin and cup", RightQuadNoStack},
+            {"PID TEST", "Drives 24 in forward with moveToPose for PID tuning.", pidTest},
+            {"NONE", "Does nothing. Robot stays still.", nullptr},
+        },
+        // tiles on the STATS tab (up to 12)
+        {
+            selector::motorTemp("L DRIVE", left_motors),
+            selector::motorTemp("R DRIVE", right_motors),
+            selector::motorTemp("CASCADE", Cascade),
+            selector::motorTemp("CLAW", Claw),
+            selector::motorTemp("Auto-Toggle", Togglemotor),
+            // selector::motorTemp("INTAKE", Intake),
+            selector::battery(),
+            {"X", [] { return (double)chassis.getPose().x; }, "%.1f"},
+            {"Y", [] { return (double)chassis.getPose().y; }, "%.1f"},
+            {"HEADING", [] { return (double)chassis.getPose().theta; }, "%.1f°"},
+            {"CASC POS", [] { return Cascade.get_position(); }},
+            {"CLAW POS", [] { return Claw.get_position(); }},
+        });
+
+    // underglow on 3-wire ports A and B (LED count + brightness are in include/underglow.hpp).
+    // Numbers are positions in the list in src/underglowAnimations.cpp, changed on the brain's LEDS tab:
+    // before / after the match = CHRISTMAS, during the match = LOGO YELLOW
+    underglow::init(/*idle*/ 1, /*match*/ 0);
+
+    // remember the picks above between runs (saved on the SD card, see include/settings.hpp).
+    // The defaults above are only used the first time, or when there's no SD card
+    settings::init();
 
     // 2. START THE SCREEN TASK
-    // Shows the odom pose on the brain and the selected auton on the controller.
+    // Prints the odom pose to the terminal and shows the alliance + auton pick on the controller.
     pros::Task screen_task([&]() {
-        int lastShown = -1;
+        int lastAuton = -1;
+        int lastAlliance = -1;
         while (true) {
             lemlib::Pose pose = chassis.getPose();
-            char status[48];
-            snprintf(status, sizeof(status), "X %.1f  Y %.1f  T %.1f", pose.x, pose.y, pose.theta);
-            selector::setStatus(status);
+            (void)pose; // only used by the printfs below
             // printf("X: %f\n", pose.x); // x
             // printf("Y: %f\n", pose.y); // y
             // printf("Theta: %f\n", pose.theta); // heading
 
-            // controller screen only updates when the pick changes (it's slow to write to)
-            if (selector::selectedIndex() != lastShown) {
-                lastShown = selector::selectedIndex();
-                controller.print(0, 0, "Auton: %-10s", selector::selectedName().c_str());
+            // controller screen only updates when a pick changes (it's slow to write to)
+            int auton = selector::selectedIndex();
+            int alliance = selector::isRed() ? 0 : 1;
+            if (auton != lastAuton || alliance != lastAlliance) {
+                lastAuton = auton;
+                lastAlliance = alliance;
+                controller.print(0, 0, "%s %-12s", alliance == 0 ? "RED" : "BLU", selector::selectedName().c_str());
             }
 
             // Standard delay
@@ -247,35 +278,8 @@ void initialize() {
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         Claw.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-        Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
-        int CascadeUp = 0;
-        std::uint32_t liftToIntakeUntil = 0; // Y/B keep raising the cascade until this time
-        int clawState1 = 0;
-        // Threshold angle in degrees where the robot is considered "tipping"
-        const double TILT_THRESHOLD = 7.0;
-        // Power applied to counteract the tip (out of 127)
-        const int CORRECTION_POWER = 80;
-        // pros::Task ClawupTask([&]() {
-        //     while (true) {
-        //         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-        //             Pickup.move_voltage(12000);
-        //             pros::delay(800);
-        //             Claw.move_absolute(1100, 127);
-        //         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-        //             Pickup.move_voltage(-12000);
-        //             Claw.move_absolute(480, 127);
-        //         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-        //             Claw.move_absolute(680,127);
-        //         }
-        //         pros::delay(25);
-        //     }
-        // });
-        while (true) {
-            // get left y and right x positions
-            int RightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-            int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-            chassis.arcade(leftY, RightX, false, 0.75);
-            pros::Task AutoToggle([&]() {
+        Cascade.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+        pros::Task AutoToggle([&]() {
             bool wasMatching = false;
             const int OBJECT_THRESHOLD = 100;
             const double MIN_SATURATION = 0.25;
@@ -309,7 +313,7 @@ void initialize() {
                     }
                 }
                 if (matchingColour && !wasMatching) {
-                    autotogglemotor.move_relative(180, 100);
+                    Togglemotor.move_relative(180, 100);
                 }
 
                 wasMatching = matchingColour;
@@ -317,6 +321,26 @@ void initialize() {
                 pros::delay(25);
             }
         });
+        while (true) {
+            // get left y and right x positions
+            int RightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+            int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+            chassis.arcade(leftY, RightX, false, 0.75);
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+                Cascade.move_voltage(12000);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+                Cascade.move_voltage(-12000);
+            } else {
+                Cascade.brake();
+            }
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+                Claw.move_voltage(12000);
+            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+                Claw.move_voltage(-12000);
+            } else {
+                Claw.brake();
+            }
+         
             pros::delay(25);
         }
     }
