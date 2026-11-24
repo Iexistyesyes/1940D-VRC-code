@@ -67,7 +67,8 @@
     pros::Motor Claw({7}, pros::MotorGearset::green);
     pros::Optical opticalSensor(8);
     pros::Motor Togglemotor({13}, pros::MotorGearset::green);
-
+    pros::adi::Pneumatics ToggleSolenoid('A', false);
+    int toggleBlock = 0;
     int autonRunning = 0;
     int autonFinished = 0;
     int drivething = 0;
@@ -340,7 +341,15 @@ void initialize() {
             } else {
                 Claw.brake();
             }
-         
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+                if (toggleBlock == 0) {
+                    ToggleSolenoid.set_value(true);
+                    toggleBlock = 1;
+                } else if (toggleBlock == 1) {
+                    ToggleSolenoid.set_value(false);
+                    toggleBlock = 0;
+                }
+            }
             pros::delay(25);
         }
     }
