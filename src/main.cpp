@@ -12,20 +12,20 @@
      */
     int autonSelected = 0;
     // INITIALISATION DO NOT TOUCH
-    pros::MotorGroup left_motors({1,-2, -3}, pros::MotorGearset::blue); // left motors on ports 2, 3
-    pros::MotorGroup right_motors({-8, 9, 10}, pros::MotorGearset::blue); // right motors on ports 9, 10
+    pros::MotorGroup left_motors({1,-2}, pros::MotorGearset::blue); // left motors on ports 2, 3
+    pros::MotorGroup right_motors({-9, 10}, pros::MotorGearset::blue); // right motors on ports 9, 10
     lemlib::Drivetrain drivetrain(&left_motors, // left motor group
                                 &right_motors, // right motor group
                                 12.7, // 12.7 inch track width
-                                lemlib::Omniwheel::NEW_325, //new 3.25" omnisx
-                                360, // drivetrain rpm is 360
+                                lemlib::Omniwheel::NEW_275, //new 3.25" omnisx
+                                450, // drivetrain rpm is 360
                                 2 // horizontal drift is 2 (for now)
     );
     pros::Imu imu(4);
     pros::Rotation vertical_encoder(5);
     pros::Rotation horizontal_encoder(6);
     // lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, 0.75); // horizontal tracking wheel, 2.
-    lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_2, 0);
+    lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_275, 0);
     lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
                                 nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
                                 // &horizontal_tracking_wheel, // horizontal tracking wheel 1
@@ -63,7 +63,7 @@
                             sensors // odometry sensors
     );
     pros::Controller controller(pros::E_CONTROLLER_MASTER);
-    pros::MotorGroup Cascade({-11, 12}, pros::MotorGearset::green); // cascade motors on ports 1, 8
+    pros::MotorGroup Cascade({-11, 20}, pros::MotorGearset::green); // cascade motors on ports 1, 8
     pros::Motor Claw({7}, pros::MotorGearset::green);
     pros::Optical opticalSensor(8);
     pros::Motor Togglemotor({13}, pros::MotorGearset::green);
@@ -200,6 +200,10 @@ void initialize() {
         //normal
         // Claw.move_absolute(0,127);
     }
+
+    void MotionChainTest() {
+        chassis.setPose(0, 0, 0);
+    } 
 
     void RightQuadNoStack() {
 
@@ -351,6 +355,6 @@ void initialize() {
                 }
             }
             pros::delay(25);
-        }
+        }    
     }
  
