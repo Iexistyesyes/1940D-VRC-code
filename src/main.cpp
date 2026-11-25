@@ -74,7 +74,7 @@
     int drivething = 0;
     // autons are defined further down, declared here so the selector can list them
     void Right_Quad();
-    void Left_Quad();z
+    void Left_Quad();
     void Skills();
     void RightQuadNoStack();
     void pidTest();
@@ -278,6 +278,7 @@ void initialize() {
 
     int drivething2;
     void opcontrol() {
+        int CascadeMove = 0;
         // Claw.set_zero_position(30);
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
@@ -354,8 +355,8 @@ void initialize() {
                 }
             }
             if (Cascade.get_position() < 0) {
-                pros::millis + 1000;
-                if (pros::millis() != 0) {
+                CascadeMove = pros::millis() + 1000;
+                if (pros::millis() < CascadeMove) {
                     Cascade.move_voltage(6000);
                     pros::delay(25);
                 }
