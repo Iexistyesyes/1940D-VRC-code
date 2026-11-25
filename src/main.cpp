@@ -13,7 +13,7 @@
     int autonSelected = 0;
     // INITIALISATION DO NOT TOUCH
     pros::MotorGroup left_motors({1,-2}, pros::MotorGearset::blue); // left motors on ports 2, 3
-    pros::MotorGroup right_motors({-9, 10}, pros::MotorGearset::blue); // right motors on ports 9, 10
+    pros::MotorGroup right_motors({-8, 9}, pros::MotorGearset::blue); // right motors on ports 9, 10
     lemlib::Drivetrain drivetrain(&left_motors, // left motor group
                                 &right_motors, // right motor group
                                 12.7, // 12.7 inch track width
@@ -36,7 +36,7 @@
     // lateral PID controller
     lemlib::ControllerSettings lateral_controller(24.7, // proportional gain (kP)
                                                 0, // integral gain (kI)
-                                                0, // derivative gain (kD)
+                                                3, // derivative gain (kD)
                                                 3, // anti windup
                                                 1, // small error range, in inches
                                                 100, // small error range timeout, in milliseconds
@@ -63,7 +63,7 @@
                             sensors // odometry sensors
     );
     pros::Controller controller(pros::E_CONTROLLER_MASTER);
-    pros::MotorGroup Cascade({-11, 20}, pros::MotorGearset::green); // cascade motors on ports 1, 8
+    pros::MotorGroup Cascade({-11, 20}, pros::MotorGearset::blue); // cascade motors on ports 1, 8
     pros::Motor Claw({7}, pros::MotorGearset::green);
     pros::Optical opticalSensor(8);
     pros::Motor Togglemotor({13}, pros::MotorGearset::green);
@@ -74,7 +74,7 @@
     int drivething = 0;
     // autons are defined further down, declared here so the selector can list them
     void Right_Quad();
-    void Left_Quad();
+    void Left_Quad();z
     void Skills();
     void RightQuadNoStack();
     void pidTest();
@@ -185,7 +185,6 @@ void initialize() {
     // The robot will calibrate in the background while your UI is fully functional.
     chassis.calibrate(); 
     Cascade.set_zero_position(0);
-    Claw.set_zero_position(0);
 }
 
     /**
@@ -328,9 +327,9 @@ void initialize() {
         });
         while (true) {
             // get left y and right x positions
-            int RightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-            int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-            chassis.arcade(leftY, RightX, false, 0.75);
+            int RightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+            int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+            chassis.arcade(-RightX, -leftY, false, 0.75);
             if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
                 Cascade.move_voltage(12000);
             } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
@@ -352,6 +351,13 @@ void initialize() {
                 } else if (toggleBlock == 1) {
                     ToggleSolenoid.set_value(false);
                     toggleBlock = 0;
+                }
+            }
+            if (Cascade.get_position() < 0) {
+                pros::millis + 1000;
+                if (pros::millis() != 0) {
+                    Cascade.move_voltage(6000);
+                    pros::delay(25);
                 }
             }
             pros::delay(25);
