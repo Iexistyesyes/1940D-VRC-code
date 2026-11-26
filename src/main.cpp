@@ -3,6 +3,8 @@
     #include "autonSelector.hpp"
     #include "settings.hpp"
     #include "underglow.hpp"
+    #include "pros/optical.hpp"
+    #include <cmath>
     //merged auton test branch
     /**
      * A callback function for LLEMU's center button.
@@ -283,7 +285,7 @@ void initialize() {
         left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
         Claw.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-        Cascade.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+        Cascade.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
         pros::Task AutoToggle([&]() {
             bool wasMatching = false;
             const int OBJECT_THRESHOLD = 100;
